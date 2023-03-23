@@ -59,22 +59,30 @@ class EconomicDataAnalysis:
 
         if self.line_chart == True:            
             st.line_chart(data=self.df_indicator_per_country)
+        
+        
+        df_indicator_per_country = self.df_indicator_per_country.dropna(axis=0)
+        if df_indicator_per_country.empty:
+           bar_chart_data = self.df_indicator_per_country
+        else:
+           last_year = df_indicator_per_country.iloc(0)[0]
+           bar_chart_data = last_year
+            
+            
 
         if self.bar_chart  == True:
-            st.bar_chart(data=self.df_indicator_per_country)
+            st.bar_chart(data=bar_chart_data)
         
         if len(self.selected_country_names) > 1 and self.pie_chart == True:
             # Pie chart, where the slices will be ordered and plotted counter-clockwise:
-            df_indicator_per_country = self.df_indicator_per_country.dropna(axis=0)
-            last_year = df_indicator_per_country.iloc(0)[0]
+            
             labels = self.selected_country_names
             sizes = []        
             for country_name in self.selected_country_names:
                 sizes.append(last_year[country_name])                                        
 
             piechart, axis_of_piechart = plt.subplots()
-            # axis_of_piechart.pie(sizes, labels=labels, autopct='%1.1f%%',
-            #         shadow=True, startangle=90)
+      
             axis_of_piechart.pie(sizes, labels=labels, autopct='%1.1f%%',
                     shadow=False)
             axis_of_piechart.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
