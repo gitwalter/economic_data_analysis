@@ -94,7 +94,7 @@ class EconomicDataAnalysis:
                 except:
                     st.write('Country ', country_name, ' is not in last or first year')
                     continue
-                
+
             piechart, axis_of_piechart = plt.subplots()
 
             axis_of_piechart.pie(sizes_last_year, labels=labels, autopct='%1.1f%%',
@@ -146,6 +146,7 @@ class EconomicDataAnalysis:
             st.write('https://pandas.pydata.org/')
             st.write('https://matplotlib.org/')
             st.write('https://docs.streamlit.io/')
+            st.write('https://github.com/gitwalter/economic_data_analysis.git')
 
             st.write('1. Select source')
             st.write('2. Select indicators')
