@@ -8,10 +8,8 @@ import matplotlib.pyplot as plt
 
 @st.cache_data
 def fetch_world_bank_data(indicators, countries):
-    #grab indicators above for countries above and load into data frame            
-    df_indicators_countries = wb.get_dataframe(indicators, country=countries, convert_date=False)
-    st.session_state.df_wb_indicators_countries = df_indicators_countries
-    return df_indicators_countries
+    #grab indicators above for countries above and load into data frame in session state           
+    st.session_state.df_wb_indicators_countries = wb.get_dataframe(indicators, country=countries, convert_date=False)
     
 
 
