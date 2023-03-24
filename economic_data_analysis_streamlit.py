@@ -71,7 +71,6 @@ class EconomicDataAnalysis:
            bar_chart_data_last_year = self.df_indicator_per_country
         else:
            last_year = df_indicator_per_country.iloc(0)[0]
-        #    first = len(df_indicator_per_country.index) - 1
            first_year = df_indicator_per_country.iloc(0)[-1]
            bar_chart_data_last_year = last_year
            bar_chart_data_first_year = first_year
@@ -81,7 +80,7 @@ class EconomicDataAnalysis:
         
 
         # pie chart with last time series
-        if len(self.selected_country_names) > 1 and self.pie_chart == True:
+        if len(self.selected_country_names) > 1 and self.pie_chart == True and not df_indicator_per_country.empty:
             # Pie chart, where the slices will be ordered and plotted counter-clockwise:
             
             labels = []
