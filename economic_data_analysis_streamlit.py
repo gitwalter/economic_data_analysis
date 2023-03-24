@@ -211,7 +211,8 @@ class EconomicDataAnalysis:
                 st.session_state.fetched_countries = []
                 st.session_state.fetched_indicators = []
                 st.session_state.df_wb_indicators_countries = pd.DataFrame()
-                st.header('error fetching data at worldbank for', indicators, countries)
+                st.header('Error fetching data at worldbank for:')
+                st.write(countries)
                 st.write(err)
                 return
 
