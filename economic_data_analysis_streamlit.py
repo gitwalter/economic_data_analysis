@@ -117,7 +117,8 @@ class EconomicDataAnalysis:
         self.pie_chart = st.sidebar.checkbox(label='Pie Chart')
         
         if not self.selected_country_names or \
-           not self.selected_indicator_names:
+           not self.selected_indicator_names or \
+           not ( self.line_chart or self.pie_chart or self.bar_chart ):
            return
 
         if self.selected_country_names and self.selected_indicator_names and \
