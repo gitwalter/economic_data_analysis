@@ -48,15 +48,7 @@ class EconomicDataAnalysis:
         self.line_chart = False        
         self.bar_chart = False
         self.pie_chart = False
-        if 'displayed_country_names' not in st.session_state:
-            st.session_state['displayed_country_names'] = []
-
-        if 'displayed_indicator_names' not in st.session_state:
-            st.session_state['displayed_indicator_names'] = []
-
-        if 'df_wb_indicators_countries' not in st.session_state:
-            st.session_state['df_wb_indicators_countries'] = pd.DataFrame()
-
+       
 
     def plotting(self):
         if not self.line_chart and not self.bar_chart and not self.pie_chart:
@@ -103,6 +95,18 @@ class EconomicDataAnalysis:
                    
 
     def run(self):
+
+        # initialize session state
+        if 'displayed_country_names' not in st.session_state:
+            st.session_state['displayed_country_names'] = []
+
+        if 'displayed_indicator_names' not in st.session_state:
+            st.session_state['displayed_indicator_names'] = []
+
+        if 'df_wb_indicators_countries' not in st.session_state:
+            st.session_state['df_wb_indicators_countries'] = pd.DataFrame()
+
+
         st.title('Economic Indicators')
         self.selected_source_name = st.sidebar.selectbox('Sources', self.source_names)
         
