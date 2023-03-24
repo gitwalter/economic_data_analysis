@@ -62,6 +62,9 @@ class EconomicDataAnalysis:
         if self.line_chart == True:
             st.line_chart(data=self.df_indicator_per_country)
 
+        if self.show_dataframe:
+            st.dataframe(self.df_indicator_per_country)
+
         # bar chart with last time series
         df_indicator_per_country = self.df_indicator_per_country.dropna(axis=0)
         if df_indicator_per_country.empty:
@@ -114,9 +117,6 @@ class EconomicDataAnalysis:
             axis_of_piechart.axis('equal')
             st.header(first_year.name)
             st.pyplot(piechart)
-
-        if self.show_dataframe:
-            st.dataframe(st.session_state.df_wb_indicators_countries)
 
         # explanation of indicator
         st.caption(self.selected_indicator['sourceNote'])
