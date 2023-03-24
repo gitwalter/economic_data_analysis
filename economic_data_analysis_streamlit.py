@@ -49,10 +49,11 @@ class EconomicDataAnalysis:
         self.line_chart = False        
         self.bar_chart = False
         self.pie_chart = False
+        self.show_dataframe = False
        
 
     def plotting(self):
-        if not self.line_chart and not self.bar_chart and not self.pie_chart:
+        if not self.line_chart and not self.bar_chart and not self.pie_chart and not self.show_dataframe:
             return
         
         # title
@@ -67,12 +68,16 @@ class EconomicDataAnalysis:
         # bar chart with last time series
         df_indicator_per_country = self.df_indicator_per_country.dropna(axis=0)        
         if df_indicator_per_country.empty:
-           bar_chart_data = self.df_indicator_per_country
+           bar_chart_data_last_year = self.df_indicator_per_country
         else:
            last_year = df_indicator_per_country.iloc(0)[0]
-           bar_chart_data = last_year
+        #    first = len(df_indicator_per_country.index) - 1
+           first_year = df_indicator_per_country.iloc(0)[-1]
+           bar_chart_data_last_year = last_year
+           bar_chart_data_first_year = first_year
         if self.bar_chart  == True:
-            st.bar_chart(data=bar_chart_data)
+            st.bar_chart(data=bar_chart_data_last_year)
+            st.bar_chart(data=bar_chart_data_first_year)
         
 
         # pie chart with last time series
@@ -80,21 +85,35 @@ class EconomicDataAnalysis:
             # Pie chart, where the slices will be ordered and plotted counter-clockwise:
             
             labels = []
-            sizes = []        
+            sizes_last_year = []        
+            sizes_first_year = []        
             for country_name in self.selected_country_names:
                 if last_year[country_name] > 0:
-                    sizes.append(last_year[country_name])
+                    sizes_last_year.append(last_year[country_name])
+                    sizes_first_year.append(first_year[country_name])
                     labels.append(country_name)
                 else:
                     st.write('Negative value for country ', country_name, ' could not be displayed in piechart')                                      
 
             piechart, axis_of_piechart = plt.subplots()
       
-            axis_of_piechart.pie(sizes, labels=labels, autopct='%1.1f%%',
+            axis_of_piechart.pie(sizes_last_year, labels=labels, autopct='%1.1f%%',
                     shadow=False)
             axis_of_piechart.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-
+            
+            st.header(last_year.name)
             st.pyplot(piechart)
+
+            piechart, axis_of_piechart = plt.subplots()
+      
+            axis_of_piechart.pie(sizes_first_year, labels=labels, autopct='%1.1f%%',
+                    shadow=False)
+            axis_of_piechart.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+            st.header(first_year.name)
+            st.pyplot(piechart)
+
+        if self.show_dataframe:
+            st.dataframe(st.session_state.df_wb_indicators_countries)
 
         # explanation of indicator
         st.write(self.selected_indicator['sourceNote'])                   
@@ -153,11 +172,12 @@ class EconomicDataAnalysis:
         self.line_chart = st.sidebar.checkbox(label='Line Chart')
         self.bar_chart = st.sidebar.checkbox(label='Bar Chart')
         self.pie_chart = st.sidebar.checkbox(label='Pie Chart')
+        self.show_dataframe = st.sidebar.checkbox(label='Display Data')
         
         # not enough defined to fetch data?
         if not self.selected_country_names or \
            not self.selected_indicator_names or \
-           not ( self.line_chart or self.pie_chart or self.bar_chart ):
+           not ( self.line_chart or self.pie_chart or self.bar_chart or self.show_dataframe):
            return
 
         # only process if selected data differs from displayed data
