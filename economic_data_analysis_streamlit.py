@@ -151,7 +151,7 @@ class EconomicDataAnalysis:
 
             #grab indicators above for countries above and load into data frame
             try:        
-                df_wb_indicators_countries = fetch_world_bank_data(indicators,countries)
+                fetch_world_bank_data(indicators,countries)
             except Exception as err:
                 st.write('error for', indicators, countries)
                 st.write(err)
@@ -164,13 +164,13 @@ class EconomicDataAnalysis:
             self.selected_indicator = [element for element in self.indicators if element['name'] in self.selected_indicator_names][0]
             # only 1 contry selected?
             if len(self.selected_country_names) == 1:
-                    self.df_indicator_per_country = df_wb_indicators_countries
+                    self.df_indicator_per_country = st.session_state.df_wb_indicators_countries
             else:
                 # ad column for each selected country
                 # in dataframe df_indicator_per_country
                 for country_name in self.selected_country_names:
                     try:
-                        self.df_indicator_per_country[country_name] = df_wb_indicators_countries.loc[country_name]
+                        self.df_indicator_per_country[country_name] = st.session_state.df_wb_indicators_countries.loc[country_name]
                     except:
                         st.write('No data for ', country_name, ' fetched')
 
