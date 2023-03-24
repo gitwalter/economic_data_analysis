@@ -8,7 +8,9 @@ import matplotlib.pyplot as plt
 
 @st.cache_data
 def fetch_world_bank_data(indicators, countries):
-    #grab indicators above for countries above and load into data frame in session state           
+    #grab indicators above for countries above and load into data frame in session state
+    # reset session state
+    st.session_state.df_wb_indicators_countries = pd.DataFrame()
     st.session_state.df_wb_indicators_countries = wb.get_dataframe(indicators, country=countries, convert_date=False)
    
 
@@ -63,11 +65,11 @@ class EconomicDataAnalysis:
             st.line_chart(data=self.df_indicator_per_country)
         
         # bar chart with last time series
-        df_indicator_per_country = self.df_indicator_per_country.dropna(axis=0)
-        last_year = df_indicator_per_country.iloc(0)[0]
+        df_indicator_per_country = self.df_indicator_per_country.dropna(axis=0)        
         if df_indicator_per_country.empty:
            bar_chart_data = self.df_indicator_per_country
         else:
+           last_year = df_indicator_per_country.iloc(0)[0]
            bar_chart_data = last_year
         if self.bar_chart  == True:
             st.bar_chart(data=bar_chart_data)
@@ -77,10 +79,14 @@ class EconomicDataAnalysis:
         if len(self.selected_country_names) > 1 and self.pie_chart == True:
             # Pie chart, where the slices will be ordered and plotted counter-clockwise:
             
-            labels = self.selected_country_names
+            labels = []
             sizes = []        
             for country_name in self.selected_country_names:
-                sizes.append(last_year[country_name])                                        
+                if last_year[country_name] > 0:
+                    sizes.append(last_year[country_name])
+                    labels.append(country_name)
+                else:
+                    st.write('Negative value for country ', country_name, ' could not be displayed in piechart')                                      
 
             piechart, axis_of_piechart = plt.subplots()
       
@@ -112,8 +118,16 @@ class EconomicDataAnalysis:
         if 'df_wb_indicators_countries' not in st.session_state:
             st.session_state['df_wb_indicators_countries'] = pd.DataFrame()
 
-
         st.title('Economic Indicators')
+
+        if st.session_state.df_wb_indicators_countries.empty:
+            st.write('1. Select source')
+            st.write('2. Select indicators')
+            st.write('3. Select countries')
+            st.write('4. Select diagram types')
+            st.write('5. Analyze data')
+        
+
         self.selected_source_name = st.sidebar.selectbox('Sources', self.source_names)
         
         if self.selected_source_name:                        
@@ -164,9 +178,12 @@ class EconomicDataAnalysis:
                 st.session_state.fetched_countries.append(country['name'])
             
             #grab indicators above for countries above and load into data frame
-            try:        
+            try:                        
                 fetch_world_bank_data(indicators,countries)
             except Exception as err:
+                # reset session state
+                st.session_state.fetched_countries = []
+                st.session_state.fetched_indicators = []
                 st.header('error fetching data at worldbank for', indicators, countries)
                 st.write(err)
                 return
