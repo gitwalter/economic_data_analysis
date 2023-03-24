@@ -111,7 +111,6 @@ class EconomicDataAnalysis:
         
         self.selected_country_names = st.sidebar.multiselect('Country', self.country_names)
 
-
         self.line_chart = st.sidebar.checkbox(label='Line Chart')
         self.bar_chart = st.sidebar.checkbox(label='Bar Chart')
         self.pie_chart = st.sidebar.checkbox(label='Pie Chart')
@@ -143,9 +142,9 @@ class EconomicDataAnalysis:
             try:        
                 df_wb_indicators_countries = get_wb_indicator_data(indicators,countries)
             except Exception as err:
-                st.write(err)
-            except:
                 st.write('error for', indicators, countries)
+                st.write(err)
+                return
             
         # build dataframe df_indicator_per_country
         # for selected indicators and countries and plot it
@@ -159,7 +158,10 @@ class EconomicDataAnalysis:
                 # ad column for each selected country
                 # in dataframe df_indicator_per_country
                 for country_name in self.selected_country_names:
-                    self.df_indicator_per_country[country_name] = df_wb_indicators_countries.loc[country_name]
+                    try:
+                        self.df_indicator_per_country[country_name] = df_wb_indicators_countries.loc[country_name]
+                    except:
+                        st.write('No data for ', country_name, ' fetched')
 
             self.plotting()
             
