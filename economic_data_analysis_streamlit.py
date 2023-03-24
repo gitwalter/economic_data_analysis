@@ -72,8 +72,8 @@ class EconomicDataAnalysis:
         else:
             last_year = df_indicator_per_country.iloc(0)[0]
             first_year = df_indicator_per_country.iloc(0)[-1]
-            if not first_year:
-                first_year = last_year
+            # if not first_year:
+            #     first_year = last_year
                 
             bar_chart_data_last_year = last_year
             bar_chart_data_first_year = first_year
