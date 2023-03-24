@@ -97,9 +97,8 @@ class EconomicDataAnalysis:
             st.pyplot(piechart)
 
         # explanation of indicator
-        st.write(self.selected_indicator['sourceNote'])
-                   
-
+        st.write(self.selected_indicator['sourceNote'])                   
+    
     def run(self):
 
         # initialize session state
@@ -121,11 +120,13 @@ class EconomicDataAnalysis:
         st.title('Economic Indicators')
 
         if st.session_state.df_wb_indicators_countries.empty:
-            st.write('Data sources: https://data.worldbank.org/')
-            st.write('API: https://wbdata.readthedocs.io/en/stable/')
-            st.write('Transformation: https://pandas.pydata.org/')
-            st.write('Plotting: https://matplotlib.org/')
-            st.write('App: https://docs.streamlit.io/')
+            st.write('https://data.worldbank.org/')
+            st.write('https://wbdata.readthedocs.io/en/stable/')
+            st.write('https://pandas.pydata.org/')
+            st.write('https://matplotlib.org/')
+            st.write('https://docs.streamlit.io/')
+            
+            
             st.write('1. Select source')
             st.write('2. Select indicators')
             st.write('3. Select countries')
