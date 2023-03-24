@@ -94,7 +94,7 @@ class EconomicDataAnalysis:
                    
 
     def run(self):
-        
+        st.title('Economic Indicators')
         self.selected_source_name = st.sidebar.selectbox('Sources', self.source_names)
         
         if self.selected_source_name:                        
