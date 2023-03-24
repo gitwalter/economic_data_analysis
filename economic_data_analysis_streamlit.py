@@ -210,6 +210,7 @@ class EconomicDataAnalysis:
                 # reset session state
                 st.session_state.fetched_countries = []
                 st.session_state.fetched_indicators = []
+                st.session_state.df_wb_indicators_countries = pd.DataFrame()
                 st.header('error fetching data at worldbank for', indicators, countries)
                 st.write(err)
                 return
@@ -254,7 +255,7 @@ class EconomicDataAnalysis:
                         try:
                             self.df_indicator_per_country[country_name] = df_indicator.loc[country_name]
                         except:
-                            st.write('no data for ', indicator_name, country_name)
+                            st.write('No data for ', indicator_name, country_name)
 
                 self.plotting()   
     
