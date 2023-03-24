@@ -9,16 +9,20 @@ import matplotlib.pyplot as plt
 @st.cache_data
 def fetch_world_bank_data(indicators, countries):
     #grab indicators above for countries above and load into data frame            
-    return wb.get_dataframe(indicators, country=countries, convert_date=False)
+    df_indicators_countries = wb.get_dataframe(indicators, country=countries, convert_date=False)
+    st.session_state.df_wb_indicators_countries = df_indicators_countries
+    return df_indicators_countries
+    
 
 
 class EconomicDataAnalysis:
-    def __init__(self, sources, countries):
-               
+   
+    def __init__(self, sources, countries):      
         # get datasources and countries 
         # from https://data.worldbank.org/
         self.sources = sources
         self.countries = countries  
+        
         
         # build list of country names
         self.country_names = []
@@ -36,17 +40,24 @@ class EconomicDataAnalysis:
 
         # initialize selected indicator and selected
         # country names
+        self.selected_source_name = None
         self.selected_indicator = None
         self.selected_country_names = []
         self.selected_indicator_names = []
-        self.displayed_country_names = []
-        self.displayed_indicator_names = []
 
         # initialize checkbox representation
         # for style of chart
         self.line_chart = False        
         self.bar_chart = False
         self.pie_chart = False
+        if 'displayed_country_names' not in st.session_state:
+            st.session_state['displayed_country_names'] = []
+
+        if 'displayed_indicator_names' not in st.session_state:
+            st.session_state['displayed_indicator_names'] = []
+
+        if 'df_wb_indicators_countries' not in st.session_state:
+            st.session_state['df_wb_indicators_countries'] = pd.DataFrame()
 
 
     def plotting(self):
@@ -115,14 +126,16 @@ class EconomicDataAnalysis:
         self.bar_chart = st.sidebar.checkbox(label='Bar Chart')
         self.pie_chart = st.sidebar.checkbox(label='Pie Chart')
         
+        # not enough defined to fetch data?
         if not self.selected_country_names or \
            not self.selected_indicator_names or \
            not ( self.line_chart or self.pie_chart or self.bar_chart ):
            return
 
+        # only process if selected data differs from displayed data
         if self.selected_country_names and self.selected_indicator_names and \
-           ( not ( self.selected_indicator_names in self.displayed_indicator_names ) or \
-             not ( self.selected_country_names in self.displayed_country_names ) ):
+           ( not all(item in st.session_state.displayed_indicator_names for item in self.selected_indicator_names) or \
+             not all(item in st.session_state.displayed_country_names for item in self.selected_country_names) ):
             
             self.selected_indicators = [element for element in self.indicators if element['name'] in self.selected_indicator_names]
             self.selected_countries = [element for element in self.countries if element['name'] in self.selected_country_names]
@@ -169,7 +182,7 @@ class EconomicDataAnalysis:
             df_indicator = pd.DataFrame()
             # plot each indicator for all selected countries
             for indicator_name in self.selected_indicator_names:
-                df_indicator = df_wb_indicators_countries[indicator_name]
+                df_indicator = st.session_state.df_wb_indicators_countries[indicator_name]
                 self.selected_indicator = [element for element in self.indicators if element['name'] == indicator_name ][0]
                 if len(self.selected_country_names) == 1:
                     self.df_indicator_per_country = df_indicator
@@ -177,22 +190,25 @@ class EconomicDataAnalysis:
                     for country_name in self.selected_country_names:
                         self.df_indicator_per_country[country_name] = df_indicator.loc[country_name]
 
-                self.plotting()
-        
-            self.displayed_indicator_names = self.selected_indicator_names
-            self.displayed_country_names = self.selected_country_names
+                self.plotting()   
+    
+        st.session_state.displayed_indicator_names = self.selected_indicator_names
+        st.session_state.displayed_country_names = self.selected_country_names
 
 
-  # get datasources and countries 
-        # from https://data.worldbank.org/
+# get datasources and countries 
+# from https://data.worldbank.org/
+# and build instance of application
+# method is cached and processed
+# only at start of the application
 @st.cache_data
-def get_static_data():  
+def start():  
     sources = wb.get_source()
     countries = wb.get_country()
-    return sources, countries
+    application = EconomicDataAnalysis(sources, countries)    
+    return application
 
-sources, countries = get_static_data()
-application = EconomicDataAnalysis(sources, countries)
+application = start()
 application.run()
 
 
