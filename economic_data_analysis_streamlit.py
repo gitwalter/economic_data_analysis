@@ -139,8 +139,13 @@ class EconomicDataAnalysis:
             for country in self.selected_countries:
                 countries.append(country['id'])
 
-            #grab indicators above for countries above and load into data frame            
-            df_wb_indicators_countries = get_wb_indicator_data(indicators,countries)
+            #grab indicators above for countries above and load into data frame
+            try:        
+                df_wb_indicators_countries = get_wb_indicator_data(indicators,countries)
+            except Exception as err:
+                st.write(err)
+            except:
+                st.write('error for', indicators, countries)
             
         # build dataframe df_indicator_per_country
         # for selected indicators and countries and plot it
