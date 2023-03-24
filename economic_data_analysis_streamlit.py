@@ -143,9 +143,11 @@ class EconomicDataAnalysis:
             try:        
                 df_wb_indicators_countries = get_wb_indicator_data(indicators,countries)
             except Exception as err:
-                st.write(err)
-            except:
                 st.write('error for', indicators, countries)
+                st.write(err)
+                return
+            
+                
             
         # build dataframe df_indicator_per_country
         # for selected indicators and countries and plot it
