@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 
 @st.cache_data
-def get_wb_indicator_data(indicators, countries):
+def fetch_world_bank_data(indicators, countries):
     #grab indicators above for countries above and load into data frame            
     return wb.get_dataframe(indicators, country=countries, convert_date=False)
 
@@ -57,22 +57,22 @@ class EconomicDataAnalysis:
         st.write(self.selected_indicator['id'])
         st.write(self.selected_indicator['name'])                
 
+        # line chart for history with full time series
         if self.line_chart == True:            
             st.line_chart(data=self.df_indicator_per_country)
         
-        
+        # bar chart with last time series
         df_indicator_per_country = self.df_indicator_per_country.dropna(axis=0)
+        last_year = df_indicator_per_country.iloc(0)[0]
         if df_indicator_per_country.empty:
            bar_chart_data = self.df_indicator_per_country
         else:
-           last_year = df_indicator_per_country.iloc(0)[0]
            bar_chart_data = last_year
-            
-            
-
         if self.bar_chart  == True:
             st.bar_chart(data=bar_chart_data)
         
+
+        # pie chart with last time series
         if len(self.selected_country_names) > 1 and self.pie_chart == True:
             # Pie chart, where the slices will be ordered and plotted counter-clockwise:
             
@@ -140,7 +140,7 @@ class EconomicDataAnalysis:
 
             #grab indicators above for countries above and load into data frame
             try:        
-                df_wb_indicators_countries = get_wb_indicator_data(indicators,countries)
+                df_wb_indicators_countries = fetch_world_bank_data(indicators,countries)
             except Exception as err:
                 st.write('error for', indicators, countries)
                 st.write(err)
