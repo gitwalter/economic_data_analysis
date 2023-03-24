@@ -53,9 +53,10 @@ class EconomicDataAnalysis:
         if not self.line_chart and not self.bar_chart and not self.pie_chart:
             return
         
-        # title                        
-        st.write(self.selected_indicator['id'])
-        st.write(self.selected_indicator['name'])                
+        # title
+        st.header(self.selected_indicator['name'])                
+        st.subheader(self.selected_indicator['id'])
+        
 
         # line chart for history with full time series
         if self.line_chart == True:            
