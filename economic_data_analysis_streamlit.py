@@ -196,7 +196,12 @@ class EconomicDataAnalysis:
             df_indicator = pd.DataFrame()
             # plot each indicator for all selected countries
             for indicator_name in self.selected_indicator_names:
-                df_indicator = st.session_state.df_wb_indicators_countries[indicator_name]
+                try:
+                    df_indicator = st.session_state.df_wb_indicators_countries[indicator_name]
+                except:
+                    st.write('No data for indicator ', indicator_name)
+                    continue
+
                 self.selected_indicator = [element for element in self.indicators if element['name'] == indicator_name ][0]
                 if len(self.selected_country_names) == 1:
                     self.df_indicator_per_country = df_indicator
