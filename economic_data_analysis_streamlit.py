@@ -10,8 +10,7 @@ import matplotlib.pyplot as plt
 def fetch_world_bank_data(indicators, countries):
     #grab indicators above for countries above and load into data frame in session state           
     st.session_state.df_wb_indicators_countries = wb.get_dataframe(indicators, country=countries, convert_date=False)
-    
-
+   
 
 class EconomicDataAnalysis:
    
@@ -103,6 +102,12 @@ class EconomicDataAnalysis:
         if 'displayed_indicator_names' not in st.session_state:
             st.session_state['displayed_indicator_names'] = []
 
+        if 'fetched_countries' not in st.session_state:             
+            st.session_state['fetched_countries'] = []
+        
+        if 'fetched_indicators' not in st.session_state:             
+            st.session_state['fetched_indicators'] = []
+
         if 'df_wb_indicators_countries' not in st.session_state:
             st.session_state['df_wb_indicators_countries'] = pd.DataFrame()
 
@@ -136,8 +141,8 @@ class EconomicDataAnalysis:
 
         # only process if selected data differs from displayed data
         if self.selected_country_names and self.selected_indicator_names and \
-           ( not all(item in st.session_state.displayed_indicator_names for item in self.selected_indicator_names) or \
-             not all(item in st.session_state.displayed_country_names for item in self.selected_country_names) ):
+           ( not all(item in st.session_state.fetched_indicators for item in self.selected_indicator_names) or \
+             not all(item in st.session_state.fetched_countries for item in self.selected_country_names) ):
             
             self.selected_indicators = [element for element in self.indicators if element['name'] in self.selected_indicator_names]
             self.selected_countries = [element for element in self.countries if element['name'] in self.selected_country_names]
@@ -146,20 +151,27 @@ class EconomicDataAnalysis:
             countries = []
 
             # build dictionary of selected indicators
+            st.session_state.fetched_indicators = []
             for indicator in self.selected_indicators:
                 indicators[indicator['id']] = indicator['name']
+                st.session_state.fetched_indicators.append(indicator['name'])
 
             # build list of selected countries
+            st.session_state.fetched_countries = []
             for country in self.selected_countries:
-                countries.append(country['id'])
-
+                countries.append(country['id'])                
+                st.session_state.fetched_countries.append(country['name'])
+            
             #grab indicators above for countries above and load into data frame
             try:        
                 fetch_world_bank_data(indicators,countries)
             except Exception as err:
-                st.write('error for', indicators, countries)
+                st.header('error fetching data at worldbank for', indicators, countries)
                 st.write(err)
                 return
+
+            
+            
             
         # build dataframe df_indicator_per_country
         # for selected indicators and countries and plot it
@@ -190,7 +202,10 @@ class EconomicDataAnalysis:
                     self.df_indicator_per_country = df_indicator
                 else:
                     for country_name in self.selected_country_names:
-                        self.df_indicator_per_country[country_name] = df_indicator.loc[country_name]
+                        try:
+                            self.df_indicator_per_country[country_name] = df_indicator.loc[country_name]
+                        except:
+                            st.write('no data for ', indicator_name, country_name)
 
                 self.plotting()   
     
