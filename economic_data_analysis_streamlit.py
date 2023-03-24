@@ -92,7 +92,8 @@ class EconomicDataAnalysis:
                         st.write('Negative value for country ', country_name,
                                  ' could not be displayed in piechart')
                 except:
-                    st.write('Country ', country_name, ' is not in last or first year')
+                    st.write('Country ', country_name,
+                             ' is not in last or first year')
                     continue
 
             piechart, axis_of_piechart = plt.subplots()
@@ -118,41 +119,17 @@ class EconomicDataAnalysis:
             st.dataframe(st.session_state.df_wb_indicators_countries)
 
         # explanation of indicator
-        st.write(self.selected_indicator['sourceNote'])
+        st.caption(self.selected_indicator['sourceNote'])
 
     def run(self):
 
         # initialize session state
-        if 'displayed_country_names' not in st.session_state:
-            st.session_state['displayed_country_names'] = []
-
-        if 'displayed_indicator_names' not in st.session_state:
-            st.session_state['displayed_indicator_names'] = []
-
-        if 'fetched_countries' not in st.session_state:
-            st.session_state['fetched_countries'] = []
-
-        if 'fetched_indicators' not in st.session_state:
-            st.session_state['fetched_indicators'] = []
-
-        if 'df_wb_indicators_countries' not in st.session_state:
-            st.session_state['df_wb_indicators_countries'] = pd.DataFrame()
+        self.initialize_session_state()
 
         st.title('Economic Indicators')
 
         if st.session_state.df_wb_indicators_countries.empty:
-            st.write('https://data.worldbank.org/')
-            st.write('https://wbdata.readthedocs.io/en/stable/')
-            st.write('https://pandas.pydata.org/')
-            st.write('https://matplotlib.org/')
-            st.write('https://docs.streamlit.io/')
-            st.write('https://github.com/gitwalter/economic_data_analysis.git')
-
-            st.write('1. Select source')
-            st.write('2. Select indicators')
-            st.write('3. Select countries')
-            st.write('4. Select diagram types')
-            st.write('5. Analyze data')
+            self.display_app_information()
 
         self.selected_source_name = st.sidebar.selectbox(
             'Sources', self.source_names)
@@ -172,21 +149,23 @@ class EconomicDataAnalysis:
         self.selected_country_names = st.sidebar.multiselect(
             'Country', self.country_names)
 
-        self.line_chart = st.sidebar.checkbox(label='Line Chart')
-        self.bar_chart = st.sidebar.checkbox(label='Bar Chart')
-        self.pie_chart = st.sidebar.checkbox(label='Pie Chart')
-        self.show_dataframe = st.sidebar.checkbox(label='Display Data')
+        self.create_checkboxes()
 
         # not enough defined to fetch data?
-        if not self.selected_country_names or \
-           not self.selected_indicator_names or \
-           not (self.line_chart or self.pie_chart or self.bar_chart or self.show_dataframe):
+        nothing_to_process = not self.selected_country_names or \
+                  not self.selected_indicator_names or \
+                  not (self.line_chart or self.pie_chart or self.bar_chart or self.show_dataframe)
+        
+        if nothing_to_process:
             return
+        
+
+        fetch_to_execute =  self.selected_country_names and self.selected_indicator_names and \
+               (not all(item in st.session_state.fetched_indicators for item in self.selected_indicator_names) or
+                not all(item in st.session_state.fetched_countries for item in self.selected_country_names))
 
         # only process if selected data differs from displayed data
-        if self.selected_country_names and self.selected_indicator_names and \
-           (not all(item in st.session_state.fetched_indicators for item in self.selected_indicator_names) or
-                not all(item in st.session_state.fetched_countries for item in self.selected_country_names)):
+        if fetch_to_execute:
 
             self.selected_indicators = [
                 element for element in self.indicators if element['name'] in self.selected_indicator_names]
@@ -227,46 +206,92 @@ class EconomicDataAnalysis:
         if len(self.selected_indicator_names) == 1:
             self.selected_indicator = [
                 element for element in self.indicators if element['name'] in self.selected_indicator_names][0]
-            # only 1 contry selected?
-            if len(self.selected_country_names) == 1:
-                self.df_indicator_per_country = st.session_state.df_wb_indicators_countries
-            else:
-                # ad column for each selected country
-                # in dataframe df_indicator_per_country
-                for country_name in self.selected_country_names:
-                    try:
-                        self.df_indicator_per_country[country_name] = st.session_state.df_wb_indicators_countries.loc[country_name]
-                    except:
-                        st.write('No data for ', country_name, ' fetched')
 
-            self.plotting()
+            # ad column for each selected country
+            # in dataframe df_indicator_per_country
+            self.plot_indicator()
 
         else:
             df_indicator = pd.DataFrame()
             # plot each indicator for all selected countries
-            for indicator_name in self.selected_indicator_names:
-                try:
-                    df_indicator = st.session_state.df_wb_indicators_countries[indicator_name]
-                except:
-                    st.write('No data for indicator ', indicator_name)
-                    continue
-
-                self.selected_indicator = [
-                    element for element in self.indicators if element['name'] == indicator_name][0]
-                if len(self.selected_country_names) == 1:
-                    self.df_indicator_per_country = df_indicator
-                else:
-                    for country_name in self.selected_country_names:
-                        try:
-                            self.df_indicator_per_country[country_name] = df_indicator.loc[country_name]
-                        except:
-                            st.write('No data for ',
-                                     indicator_name, country_name)
-
-                self.plotting()
+            self.plot_indicators()
 
         st.session_state.displayed_indicator_names = self.selected_indicator_names
         st.session_state.displayed_country_names = self.selected_country_names
+
+    def create_checkboxes(self):
+        self.line_chart = st.sidebar.checkbox(label='Line Chart')
+        self.bar_chart = st.sidebar.checkbox(label='Bar Chart')
+        self.pie_chart = st.sidebar.checkbox(label='Pie Chart')
+        self.show_dataframe = st.sidebar.checkbox(label='Display Data')
+
+    def plot_indicator(self):
+        for country_name in self.selected_country_names:
+            try:
+                self.df_indicator_per_country[country_name] = st.session_state.df_wb_indicators_countries.loc[country_name]
+            except:
+                st.write('No data for ', country_name, ' fetched')
+
+        self.plotting()
+
+    def plot_indicators(self):
+        for indicator_name in self.selected_indicator_names:
+            try:
+                df_indicator = st.session_state.df_wb_indicators_countries[indicator_name]
+            except:
+                st.write('No data for indicator ', indicator_name)
+                continue
+
+            self.get_indicator_for_countries(df_indicator, indicator_name)
+
+            self.plotting()
+
+    def get_indicator_for_countries(self, df_indicator, indicator_name):
+        self.selected_indicator = [
+            element for element in self.indicators if element['name'] == indicator_name][0]
+        if len(self.selected_country_names) == 1:
+            self.df_indicator_per_country = df_indicator
+        else:
+            self.append_indicator_for_countries(df_indicator, indicator_name)
+
+    def append_indicator_for_countries(self, df_indicator, indicator_name):
+        for country_name in self.selected_country_names:
+            try:
+                self.df_indicator_per_country[country_name] = df_indicator.loc[country_name]
+            except:
+                st.write('No data for ',
+                         indicator_name, country_name)
+
+    def display_app_information(self):
+        st.write('1. Select source')
+        st.write('2. Select indicators')
+        st.write('3. Select countries')
+        st.write('4. Select diagram types')
+        st.write('5. Analyze data')
+
+        st.write('Source: ', 'https://data.worldbank.org/')
+        st.write('Interface: ', 'https://pypi.org/project/wbdata/')
+        st.write('Processing: ', 'https://pandas.pydata.org/')
+        st.write('Plotting: ', 'https://matplotlib.org/')
+        st.write('App: ', 'https://docs.streamlit.io/')
+        st.write('Repository: ',
+                 'https://github.com/gitwalter/economic_data_analysis.git')
+
+    def initialize_session_state(self):
+        if 'displayed_country_names' not in st.session_state:
+            st.session_state['displayed_country_names'] = []
+
+        if 'displayed_indicator_names' not in st.session_state:
+            st.session_state['displayed_indicator_names'] = []
+
+        if 'fetched_countries' not in st.session_state:
+            st.session_state['fetched_countries'] = []
+
+        if 'fetched_indicators' not in st.session_state:
+            st.session_state['fetched_indicators'] = []
+
+        if 'df_wb_indicators_countries' not in st.session_state:
+            st.session_state['df_wb_indicators_countries'] = pd.DataFrame()
 
 
 # get datasources and countries
