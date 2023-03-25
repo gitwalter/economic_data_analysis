@@ -65,9 +65,6 @@ class EconomicDataAnalysis:
         self.show_dataframe = False
 
     def output(self):
-        if not (self.show_line_chart or self.show_bar_chart or self.show_pie_chart or self.show_dataframe):
-            return
-
         # title
         st.header(self.selected_indicator['name'])
         st.subheader(self.selected_indicator['id'])
@@ -82,32 +79,38 @@ class EconomicDataAnalysis:
         if self.show_line_chart:
             st.line_chart(data=self.df_indicator_per_country)
 
-        # display dataframe for indicator
-        if self.show_dataframe:
-            st.dataframe(self.df_indicator_per_country)
-
         # bar chart with last and first time series for comparison
         if self.show_bar_chart or self.show_pie_chart:
             first_year, last_year = self.get_begin_end()
 
-        # because of missing data first year or last year could not be determined
-        if not 'first_year' in locals() or not 'last_year' in locals():
-            return
+            show_bar_chart = self.show_bar_chart
+            show_pie_chart = self.show_pie_chart
 
-        if self.show_bar_chart:
-            try:
-                self.plot_bar_charts(last_year, first_year)
-            except Exception as err:
-                st.write('Bar charts could not be generated')
-                st.write(err)
+            if not 'first_year' in locals():
+                show_bar_chart = False
+                show_pie_chart = False
+            elif first_year.empty:
+                show_bar_chart = False
+                show_pie_chart = False
 
-        # pie chart with first and last time series
-        if self.show_pie_chart:
-            if len(self.selected_country_names) <= 1:
-                st.write('Only one country selected, pie chart not supported')
+            if show_bar_chart:
+                try:
+                    self.plot_bar_charts(last_year, first_year)
+                except Exception as err:
+                    st.write('Bar charts could not be generated')
+                    st.write(err)
 
-            if len(self.selected_country_names) > 1 and not self.df_indicator_per_country.empty:
-                self.plot_pie_charts(last_year, first_year)
+            # pie chart with first and last time series
+            if show_pie_chart:
+                if len(self.selected_country_names) <= 1:
+                    st.write('Only one country selected, pie chart not supported')
+
+                if len(self.selected_country_names) > 1 and not self.df_indicator_per_country.empty:
+                    self.plot_pie_charts(last_year, first_year)
+
+        # display dataframe for indicator
+        if self.show_dataframe:
+            st.dataframe(self.df_indicator_per_country)
 
     def plot_bar_charts(self, bar_chart_data_last_year, bar_chart_data_first_year):
         st.bar_chart(data=bar_chart_data_last_year)
@@ -118,14 +121,18 @@ class EconomicDataAnalysis:
         sizes_last_year = []
         sizes_first_year = []
 
-        self.get_labels_and_sizes(
+        self.get_pie_chart_labels_sizes(
             last_year, first_year, labels, sizes_last_year, sizes_first_year)
 
-        self.plot_pie_for_year(last_year, labels, sizes_last_year)
+        self.plot_pie_chart_for_year(last_year, labels, sizes_last_year)
 
-        self.plot_pie_for_year(first_year, labels, sizes_first_year)
+        self.plot_pie_chart_for_year(first_year, labels, sizes_first_year)
 
-    def get_labels_and_sizes(self, last_year, first_year, labels, sizes_last_year, sizes_first_year):
+    def get_pie_chart_labels_sizes(self, last_year, first_year, labels, sizes_last_year, sizes_first_year):
+        # iterate over selected countries
+        # and append sizes and labels for first and last year
+        # if values are above 0 since negative values
+        # could not be displayed in a pie chart
         for country_name in self.selected_country_names:
             try:
                 if last_year[country_name] > 0 and first_year[country_name] > 0:
@@ -136,11 +143,10 @@ class EconomicDataAnalysis:
                     st.write('Negative value for country ', country_name,
                              ' could not be displayed in piechart')
             except:
-                st.write('Country ', country_name,
-                         ' is not in last or first year')
+                st.write('No data for first or last year for ', country_name)
                 continue
 
-    def plot_pie_for_year(self, last_year, labels, sizes_year):
+    def plot_pie_chart_for_year(self, last_year, labels, sizes_year):
         piechart, axis_of_piechart = plt.subplots()
 
         axis_of_piechart.pie(sizes_year, labels=labels, autopct='%1.1f%%',
@@ -156,11 +162,13 @@ class EconomicDataAnalysis:
         # if many countries are selected indicator per country is a pandas.DataFrame
         indicator_per_country = self.df_indicator_per_country.dropna(axis=0)
         if indicator_per_country.empty:
-            st.write('Not enough datapoints for charts of first or last year of time series for indicator ',
-                     self.selected_indicator['name'], '.')
-            st.write(
-                'Try the line chart or display the dataframe for the indicator and exclude the countries with missing data and try again.')
-            return None, None
+            error_message = 'Not enough data for charts of first or last year of time series for indicator ' + \
+                            self.selected_indicator['name'] + '.' + \
+                            ' Try the line chart or display the dataframe for the indicator and exclude countries with bad data quality and try again.'
+            
+            st.error(error_message, icon="🔥")
+          
+            return pd.Series(), pd.Series()
         else:
             try:
                 first_year = indicator_per_country.iloc(0)[-1]
@@ -168,7 +176,7 @@ class EconomicDataAnalysis:
             except:
                 st.write('Error iloc at handling with dataframe: ',
                          indicator_per_country)
-                return None, None
+                return pd.Series, pd.Series()
 
             if len(self.selected_country_names) == 1:
                 selected_country_name = self.selected_country_names[0]
@@ -205,8 +213,6 @@ class EconomicDataAnalysis:
         # initialize session state
         self.initialize_session_state()
 
-        st.title('Economic Indicators')
-
         st.sidebar.header('Selection')
 
         if st.session_state.df_wb_indicators_countries.empty:
@@ -217,6 +223,8 @@ class EconomicDataAnalysis:
 
         if self.selected_source_name:
             self.create_mulitiselect_indicator_country()
+
+        st.title(self.selected_source_name)
 
         self.create_checkboxes()
 
@@ -234,33 +242,9 @@ class EconomicDataAnalysis:
 
         # only process if selected data differs from displayed data
         if fetch_to_execute:
-
-            self.selected_indicators = [
-                element for element in self.indicators if element['name'] in self.selected_indicator_names]
-            self.selected_countries = [
-                element for element in self.countries if element['name'] in self.selected_country_names]
-
-            # prepare parameter for api call
-            indicators = {}
-            countries = []
-
-            # build dictionary of selected indicators
-            # for api call and append to session state
-            st.session_state.fetched_indicators = []
-            for indicator in self.selected_indicators:
-                indicators[indicator['id']] = indicator['name']
-                st.session_state.fetched_indicators.append(indicator['name'])
-
-            # build list of selected countries
-            # for api call and append to session state
-            st.session_state.fetched_countries = []
-            for country in self.selected_countries:
-                countries.append(country['id'])
-                st.session_state.fetched_countries.append(country['name'])
-
             # grab indicators above for countries above and load into data frame
             try:
-                fetch_world_bank_data(indicators, countries)
+                fetch_world_bank_data(self.get_parameter_for_api_call())
             except Exception as err:
                 # reset session state
                 self.initialize_session_state()
@@ -270,18 +254,38 @@ class EconomicDataAnalysis:
                 print(err)
                 return
 
-        # build dataframe df_indicator_per_country
-        # for selected indicators and countries and plot it
-        # only 1 indicator selected?
         if len(self.selected_indicator_names) == 1:
+            # plot one indicator
             self.plot_indicator()
-
         else:
             # plot each indicator for all selected countries
             self.plot_indicators()
+        
 
-        st.session_state.displayed_indicator_names = self.selected_indicator_names
-        st.session_state.displayed_country_names = self.selected_country_names
+    def get_parameter_for_api_call(self):
+        self.selected_indicators = [
+            element for element in self.indicators if element['name'] in self.selected_indicator_names]
+        self.selected_countries = [
+            element for element in self.countries if element['name'] in self.selected_country_names]
+
+        # prepare parameter for api call
+        indicators = {}
+        countries = []
+
+        # build dictionary of selected indicators
+        # for api call and append to session state
+        st.session_state.fetched_indicators = []
+        for indicator in self.selected_indicators:
+            indicators[indicator['id']] = indicator['name']
+            st.session_state.fetched_indicators.append(indicator['name'])
+
+        # build list of selected countries
+        # for api call and append to session state
+        st.session_state.fetched_countries = []
+        for country in self.selected_countries:
+            countries.append(country['id'])
+            st.session_state.fetched_countries.append(country['name'])
+        return indicators, countries
 
     def create_mulitiselect_indicator_country(self):
         self.indicators = fetch_indicators_of_source(
@@ -365,12 +369,6 @@ class EconomicDataAnalysis:
                  'https://github.com/gitwalter/economic_data_analysis.git')
 
     def initialize_session_state(self):
-        if 'displayed_country_names' not in st.session_state:
-            st.session_state['displayed_country_names'] = []
-
-        if 'displayed_indicator_names' not in st.session_state:
-            st.session_state['displayed_indicator_names'] = []
-
         if 'fetched_countries' not in st.session_state:
             st.session_state['fetched_countries'] = []
 
