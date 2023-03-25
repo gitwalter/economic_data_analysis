@@ -240,6 +240,12 @@ class EconomicDataAnalysis:
             not (self.show_line_chart or self.show_pie_chart or self.show_bar_chart or self.show_dataframe)
 
         if nothing_to_process:
+            df_indicator_display = pd.DataFrame(self.indicators)
+            df_indicator_display = df_indicator_display[['id', 'name', 'sourceNote']]
+            st.header('Indicator list')
+            st.dataframe(df_indicator_display)
+            st.header('Country list')
+            st.dataframe(self.countries)
             return
 
         fetch_to_execute = self.selected_country_names and self.selected_indicator_names and \
