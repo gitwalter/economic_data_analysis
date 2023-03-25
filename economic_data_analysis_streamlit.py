@@ -180,7 +180,7 @@ class EconomicDataAnalysis:
                 
                 first_year_date = indicator_for_one_country.index[-1][1]
 
-                first_year = pd.Series(data=first_year_dict, index=selected_country_name, name=first_year_date)
+                first_year = pd.Series(data=first_year_dict, index=[selected_country_name], name=first_year_date)
 
                 last_year_value = indicator_per_country[[
                     self.selected_country_names[0]]][0]
@@ -190,7 +190,7 @@ class EconomicDataAnalysis:
                 
                 last_year_date = indicator_for_one_country.index[0][1]
 
-                last_year = pd.Series(data=last_year_dict, index=selected_country_name, name=last_year_date)
+                last_year = pd.Series(data=last_year_dict, index=[selected_country_name], name=last_year_date)
             return first_year, last_year
 
     def run(self):
