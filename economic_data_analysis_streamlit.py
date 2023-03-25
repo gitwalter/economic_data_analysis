@@ -214,9 +214,6 @@ class EconomicDataAnalysis:
 
         st.sidebar.header('Selection')
 
-        if st.session_state.df_wb_indicators_countries.empty:
-            self.display_app_information()
-
         self.selected_source_name = st.sidebar.selectbox(
             'Source', self.source_names)
 
@@ -224,6 +221,9 @@ class EconomicDataAnalysis:
             self.create_mulitiselect_indicator_country()
 
         st.title(self.selected_source_name)
+
+        if st.session_state.df_wb_indicators_countries.empty:
+            self.display_app_information()
 
         self.create_checkboxes()
 
