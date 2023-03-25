@@ -255,6 +255,7 @@ class EconomicDataAnalysis:
             except Exception as err:
                 # reset session state
                 self.initialize_session_state()
+                country_string = ''
                 for country_name in self.selected_country_names:
                     country_string = country_string + ' ' + country_name
                 error_message = 'Error during dataload from worldbank for:' + country_string
