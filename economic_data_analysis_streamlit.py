@@ -140,10 +140,10 @@ class EconomicDataAnalysis:
                          ' is not in last or first year')
                 continue
 
-    def plot_pie_for_year(self, last_year, labels, sizes_last_year):
+    def plot_pie_for_year(self, last_year, labels, sizes_year):
         piechart, axis_of_piechart = plt.subplots()
 
-        axis_of_piechart.pie(sizes_last_year, labels=labels, autopct='%1.1f%%',
+        axis_of_piechart.pie(sizes_year, labels=labels, autopct='%1.1f%%',
                              shadow=False)
 
         axis_of_piechart.axis('equal')
@@ -159,7 +159,7 @@ class EconomicDataAnalysis:
             st.write('Not enough datapoints for charts of first or last year of time series for indicator ',
                      self.selected_indicator['name'], '.')
             st.write(
-                'Try the line chart or display the dataframe for the indicator and exclude the countries with missing data and try angain.')
+                'Try the line chart or display the dataframe for the indicator and exclude the countries with missing data and try again.')
             return None, None
         else:
             try:
@@ -287,12 +287,12 @@ class EconomicDataAnalysis:
         self.indicators = fetch_indicators_of_source(
             [element for element in self.sources if element['name'] == self.selected_source_name][0]['id'])
         # build list of indicator names
-        self.indicator_names = []
+        indicator_names = []
         for indicator in self.indicators:
-            self.indicator_names.append(indicator['name'])
+            indicator_names.append(indicator['name'])
 
         self.selected_indicator_names = st.sidebar.multiselect(
-            'Indicator', self.indicator_names)
+            'Indicator', indicator_names)
 
         self.selected_country_names = st.sidebar.multiselect(
             'Country', self.country_names)
