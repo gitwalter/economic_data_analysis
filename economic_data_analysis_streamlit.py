@@ -67,13 +67,16 @@ class EconomicDataAnalysis:
     def output(self):
         if not (self.show_line_chart or self.show_bar_chart or self.show_pie_chart or self.show_dataframe):
             return
-
+        
         # title
         st.header(self.selected_indicator['name'])
         st.subheader(self.selected_indicator['id'])
 
         # explanation of indicator
         st.caption(self.selected_indicator['sourceNote'])
+
+        if self.df_indicator_per_country.empty:
+            return
 
         # line chart for history with full time series
         if self.show_line_chart:
@@ -115,7 +118,8 @@ class EconomicDataAnalysis:
         sizes_last_year = []
         sizes_first_year = []
 
-        self.get_labels_and_sizes(last_year, first_year, labels, sizes_last_year, sizes_first_year)
+        self.get_labels_and_sizes(
+            last_year, first_year, labels, sizes_last_year, sizes_first_year)
 
         self.plot_pie_for_year(last_year, labels, sizes_last_year)
 
@@ -135,14 +139,13 @@ class EconomicDataAnalysis:
                 st.write('Country ', country_name,
                          ' is not in last or first year')
                 continue
-      
 
     def plot_pie_for_year(self, last_year, labels, sizes_last_year):
         piechart, axis_of_piechart = plt.subplots()
 
         axis_of_piechart.pie(sizes_last_year, labels=labels, autopct='%1.1f%%',
                              shadow=False)
-        
+
         axis_of_piechart.axis('equal')
 
         st.header(last_year.name)
@@ -150,7 +153,7 @@ class EconomicDataAnalysis:
 
     def get_begin_end(self):
         # if 1 country is selected indicator_per_country is a pandas.Series
-        # if many counties are selected indicator per country is a pandas.DataFrame
+        # if many countries are selected indicator per country is a pandas.DataFrame
         indicator_per_country = self.df_indicator_per_country.dropna(axis=0)
         if indicator_per_country.empty:
             st.write('Not enough datapoints for charts of first or last year of time series for indicator ',
@@ -169,23 +172,29 @@ class EconomicDataAnalysis:
 
             if len(self.selected_country_names) == 1:
                 selected_country_name = self.selected_country_names[0]
+                try:
+                    indicator_for_one_country = indicator_per_country[[
+                        selected_country_name]]
+                except:
+                    st.write('No data for indicator',
+                             self.selected_indicator['name'], ' and country ', selected_country_name, ' fetched')
+                    return None, None
 
-                indicator_for_one_country = indicator_per_country[[selected_country_name]]
-                
                 if type(indicator_for_one_country) is pd.DataFrame:
-                    first_year = indicator_for_one_country.iloc[-1]    
-                    last_year = indicator_for_one_country.iloc[0]    
+                    first_year = indicator_for_one_country.iloc[-1]
+                    last_year = indicator_for_one_country.iloc[0]
                 else:
                     first_year_value = indicator_for_one_country[-1]
                     first_year_date = indicator_for_one_country.index[-1][1]
                     first_year_dict = {selected_country_name: first_year_value}
-                    first_year = pd.Series(data=first_year_dict, index=[selected_country_name], name=first_year_date)
+                    first_year = pd.Series(data=first_year_dict, index=[
+                                           selected_country_name], name=first_year_date)
 
                     last_year_value = indicator_for_one_country[0]
                     last_year_date = indicator_for_one_country.index[0][1]
                     last_year_dict = {selected_country_name: last_year_value}
-                    last_year = pd.Series(data=last_year_dict, index=[selected_country_name], name=last_year_date)
-
+                    last_year = pd.Series(data=last_year_dict, index=[
+                                          selected_country_name], name=last_year_date)
 
             return first_year, last_year
 
@@ -254,8 +263,9 @@ class EconomicDataAnalysis:
                 # reset session state
                 self.initialize_session_state()
                 st.write('Error fetching data at worldbank for:')
-                st.write(self.selected_country_names)
-                # st.write(err)
+                for country_name in self.selected_country_names:
+                    st.write(country_name)
+                print(err)
                 return
 
         # build dataframe df_indicator_per_country
@@ -323,7 +333,11 @@ class EconomicDataAnalysis:
         self.selected_indicator = [
             element for element in self.indicators if element['name'] == indicator_name][0]
         if len(self.selected_country_names) == 1:
-            self.df_indicator_per_country = df_indicator
+            try:
+                self.df_indicator_per_country = df_indicator.loc[self.selected_country_names[0]]
+            except:
+                st.write('No data for ', self.selected_country_names[0], ' fetched' )
+                return            
         else:
             self.append_indicator_for_countries(df_indicator, indicator_name)
 
@@ -339,8 +353,10 @@ class EconomicDataAnalysis:
         st.write('1. Select source')
         st.write('2. Select indicators')
         st.write('3. Select countries')
-        st.write('4. Select diagram types')
-        st.write('5. Analyze data')
+        st.write('4. Select output')        
+        st.write('5. Analyze data')    
+        st.write('Data load starts after selection of output. To avoid data load after each parameter change deactivate output during selection of indicators or countries.')
+        
 
         st.write('Source: ', 'https://data.worldbank.org/')
         st.write('Interface: ', 'https://pypi.org/project/wbdata/')
