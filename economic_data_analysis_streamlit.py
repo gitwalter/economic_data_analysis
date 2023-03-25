@@ -5,6 +5,17 @@ import pandas as pd
 import wbdata as wb
 import matplotlib.pyplot as plt
 
+# get datasources and countries
+# from https://data.worldbank.org/
+# and build instance of application
+# method is cached and processed
+# only at start of the application
+@st.cache_data
+def start():
+    sources = wb.get_source()
+    countries = wb.get_country()
+    application = EconomicDataAnalysis(sources, countries)
+    return application
 
 @st.cache_data
 def fetch_world_bank_data(indicators, countries):
@@ -13,6 +24,11 @@ def fetch_world_bank_data(indicators, countries):
     st.session_state.df_wb_indicators_countries = pd.DataFrame()
     st.session_state.df_wb_indicators_countries = wb.get_dataframe(
         indicators, country=countries, convert_date=False)
+
+
+@st.cache_data
+def fetch_indicators_of_source(source):
+    return wb.get_indicator(source=source)
 
 
 class EconomicDataAnalysis:
@@ -68,15 +84,21 @@ class EconomicDataAnalysis:
         # bar chart with last time series
         df_indicator_per_country = self.df_indicator_per_country.dropna(axis=0)
         if df_indicator_per_country.empty:
-            bar_chart_data_last_year = self.df_indicator_per_country
+            st.write('Not enough datapoints for charts of first or last year of time series for indicator ', self.selected_indicator['name'], '.')
+            st.write('Try line chart or display of data.')
+            return
         else:
-            last_year = df_indicator_per_country.iloc(0)[0]
-            first_year = df_indicator_per_country.iloc(0)[-1]
-            # if not first_year:
-            #     first_year = last_year
-                
+            try:             
+                last_year = df_indicator_per_country.iloc(0)[0]
+                first_year = df_indicator_per_country.iloc(0)[-1]
+            except:
+                st.write('Error iloc at handling with dataframe: ', df_indicator_per_country)
+                return               
             bar_chart_data_last_year = last_year
             bar_chart_data_first_year = first_year
+
+
+
         if self.bar_chart == True:
             st.bar_chart(data=bar_chart_data_last_year)
             st.bar_chart(data=bar_chart_data_first_year)
@@ -85,44 +107,47 @@ class EconomicDataAnalysis:
         if len(self.selected_country_names) > 1 and self.pie_chart == True and not df_indicator_per_country.empty:
             # Pie chart, where the slices will be ordered and plotted counter-clockwise:
 
-            labels = []
-            sizes_last_year = []
-            sizes_first_year = []
-            for country_name in self.selected_country_names:
-                try:
-                    if last_year[country_name] > 0 and first_year[country_name] > 0:
-                        sizes_last_year.append(last_year[country_name])
-                        sizes_first_year.append(first_year[country_name])
-                        labels.append(country_name)
-                    else:
-                        st.write('Negative value for country ', country_name,
-                                 ' could not be displayed in piechart')
-                except:
-                    st.write('Country ', country_name,
-                             ' is not in last or first year')
-                    continue
-
-            piechart, axis_of_piechart = plt.subplots()
-
-            axis_of_piechart.pie(sizes_last_year, labels=labels, autopct='%1.1f%%',
-                                 shadow=False)
-            # Equal aspect ratio ensures that pie is drawn as a circle.
-            axis_of_piechart.axis('equal')
-
-            st.header(last_year.name)
-            st.pyplot(piechart)
-
-            piechart, axis_of_piechart = plt.subplots()
-
-            axis_of_piechart.pie(sizes_first_year, labels=labels, autopct='%1.1f%%',
-                                 shadow=False)
-            # Equal aspect ratio ensures that pie is drawn as a circle.
-            axis_of_piechart.axis('equal')
-            st.header(first_year.name)
-            st.pyplot(piechart)
+            self.plot_pie_chart(last_year, first_year)
 
         # explanation of indicator
         st.caption(self.selected_indicator['sourceNote'])
+
+    def plot_pie_chart(self, last_year, first_year):
+        labels = []
+        sizes_last_year = []
+        sizes_first_year = []
+        for country_name in self.selected_country_names:
+            try:
+                if last_year[country_name] > 0 and first_year[country_name] > 0:
+                    sizes_last_year.append(last_year[country_name])
+                    sizes_first_year.append(first_year[country_name])
+                    labels.append(country_name)
+                else:
+                    st.write('Negative value for country ', country_name,
+                                 ' could not be displayed in piechart')
+            except:
+                st.write('Country ', country_name,
+                             ' is not in last or first year')
+                continue
+
+        piechart, axis_of_piechart = plt.subplots()
+
+        axis_of_piechart.pie(sizes_last_year, labels=labels, autopct='%1.1f%%',
+                                 shadow=False)
+            # Equal aspect ratio ensures that pie is drawn as a circle.
+        axis_of_piechart.axis('equal')
+
+        st.header(last_year.name)
+        st.pyplot(piechart)
+
+        piechart, axis_of_piechart = plt.subplots()
+
+        axis_of_piechart.pie(sizes_first_year, labels=labels, autopct='%1.1f%%',
+                                 shadow=False)
+            # Equal aspect ratio ensures that pie is drawn as a circle.
+        axis_of_piechart.axis('equal')
+        st.header(first_year.name)
+        st.pyplot(piechart)
 
     def run(self):
 
@@ -135,22 +160,11 @@ class EconomicDataAnalysis:
             self.display_app_information()
 
         self.selected_source_name = st.sidebar.selectbox(
-            'Sources', self.source_names)
+            'Source', self.source_names)
 
         if self.selected_source_name:
-            self.indicators = wb.get_indicator(
-                source=[element for element in self.sources if element['name'] == self.selected_source_name][0]['id'])
+            self.create_mulitiselect_indicator_country()
 
-            # build list of indicator names
-            self.indicator_names = []
-            for indicator in self.indicators:
-                self.indicator_names.append(indicator['name'])
-
-            self.selected_indicator_names = st.sidebar.multiselect(
-                'Indicators', self.indicator_names)
-
-        self.selected_country_names = st.sidebar.multiselect(
-            'Country', self.country_names)
 
         self.create_checkboxes()
 
@@ -221,6 +235,22 @@ class EconomicDataAnalysis:
 
         st.session_state.displayed_indicator_names = self.selected_indicator_names
         st.session_state.displayed_country_names = self.selected_country_names
+
+    def create_mulitiselect_indicator_country(self):
+        source = [element for element in self.sources if element['name'] == self.selected_source_name][0]['id']
+        self.indicators = fetch_indicators_of_source(source)
+        # self.indicators = wb.get_indicator([element for element in self.sources if element['name'] == self.selected_source_name][0]['id'])
+
+            # build list of indicator names
+        self.indicator_names = []
+        for indicator in self.indicators:
+            self.indicator_names.append(indicator['name'])
+
+        self.selected_indicator_names = st.sidebar.multiselect(
+                'Indicator', self.indicator_names)
+        
+        self.selected_country_names = st.sidebar.multiselect(
+                'Country', self.country_names)
 
     def create_checkboxes(self):
         self.line_chart = st.sidebar.checkbox(label='Line Chart')
@@ -296,18 +326,6 @@ class EconomicDataAnalysis:
         if 'df_wb_indicators_countries' not in st.session_state:
             st.session_state['df_wb_indicators_countries'] = pd.DataFrame()
 
-
-# get datasources and countries
-# from https://data.worldbank.org/
-# and build instance of application
-# method is cached and processed
-# only at start of the application
-@st.cache_data
-def start():
-    sources = wb.get_source()
-    countries = wb.get_country()
-    application = EconomicDataAnalysis(sources, countries)
-    return application
 
 
 application = start()
