@@ -8,12 +8,16 @@ import matplotlib.pyplot as plt
 # get datasources and countries from https://data.worldbank.org/
 # and build instance of application method is cached and processed
 # only at start of the application
+
+
 @st.cache_data
 def start():
     application = EconomicDataAnalysis(wb.get_source(), wb.get_country())
     return application
 
 # fetch selected indicator values for countries
+
+
 @st.cache_data
 def load_world_bank_data(indicators, countries):
     # load data into session state for further processing
@@ -21,6 +25,8 @@ def load_world_bank_data(indicators, countries):
         indicators, country=countries, convert_date=False)
 
 # fetch indicators for selected source
+
+
 @st.cache_data
 def load_indicators_of_source(source):
     return wb.get_indicator(source=source)
@@ -134,14 +140,14 @@ class EconomicDataAnalysis:
                     sizes_first_year.append(first_year[country_name])
                     labels.append(country_name)
                 else:
-                    
+
                     error_message = 'Negative value for country ' + country_name + \
                                     ' could not be displayed in piechart'
-                    
+
                     st.error(error_message, icon="🤖")
             except:
                 error_message = 'No data for first or last year for ' + country_name
-                st.error(error_message, icon="🔥")                
+                st.error(error_message, icon="🔥")
                 continue
 
     def plot_pie_chart_for_year(self, last_year, labels, sizes_year):
@@ -163,9 +169,9 @@ class EconomicDataAnalysis:
             error_message = 'Not enough data for charts of first or last year of time series for indicator ' + \
                             self.selected_indicator['name'] + '.' + \
                             ' Try the line chart or display the dataframe for the indicator and exclude countries with bad data quality and try again.'
-            
+
             st.error(error_message, icon="🔥")
-          
+
             return pd.Series(), pd.Series()
         else:
             try:
@@ -185,7 +191,7 @@ class EconomicDataAnalysis:
                             selected_country_name]]
                     except:
                         error_message = 'No data for indicator' + self.selected_indicator['name'] + \
-                                        ' and country ' + selected_country_name, ' loaded'
+                                        ' and country ' + selected_country_name
                         st.error(error_message, icon="🔥")
                         return None, None
                     first_year = indicator_for_one_country.iloc[-1]
@@ -261,7 +267,6 @@ class EconomicDataAnalysis:
         else:
             # plot each indicator for all selected countries
             self.plot_indicators()
-        
 
     def get_parameter_for_api_call(self):
         self.selected_indicators = [
@@ -316,7 +321,8 @@ class EconomicDataAnalysis:
             try:
                 self.df_indicator_per_country[country_name] = st.session_state.df_wb_indicators_countries.loc[country_name]
             except:
-                st.write('No data for ', country_name, ' fetched')
+                error_message = 'No data for ' + country_name
+                st.error(error_message, icon="🔥")
 
         self.output()
 
@@ -325,7 +331,8 @@ class EconomicDataAnalysis:
             try:
                 indicator = st.session_state.df_wb_indicators_countries[indicator_name]
             except:
-                st.write('No data for indicator ', indicator_name)
+                error_message = 'No data for indicator ' + indicator_name
+                st.error(error_message, icon="🔥")
                 continue
 
             self.get_indicator_for_countries(indicator, indicator_name)
@@ -339,8 +346,8 @@ class EconomicDataAnalysis:
             try:
                 self.df_indicator_per_country = indicator.loc[self.selected_country_names[0]]
             except:
-                st.write('No data for ',
-                         self.selected_country_names[0], ' fetched')
+                error_message = 'No data for ' + self.selected_country_names[0]
+                st.error(error_message, icon="🔥")
                 return
         else:
             self.append_indicator_for_countries(indicator, indicator_name)
@@ -350,8 +357,9 @@ class EconomicDataAnalysis:
             try:
                 self.df_indicator_per_country[country_name] = df_indicator.loc[country_name]
             except:
-                st.write('No data for indicator',
-                         indicator_name, 'and country ', country_name, ' loaded')
+                error_message = 'No data for indicator' + indicator_name + \
+                    'and country ' + country_name
+                st.error(error_message, icon="🔥")
 
     def display_app_information(self):
         st.header('How to use')
