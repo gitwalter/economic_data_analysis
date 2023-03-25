@@ -8,27 +8,21 @@ import matplotlib.pyplot as plt
 # get datasources and countries from https://data.worldbank.org/
 # and build instance of application method is cached and processed
 # only at start of the application
-
-
 @st.cache_data
 def start():
     application = EconomicDataAnalysis(wb.get_source(), wb.get_country())
     return application
 
 # fetch selected indicator values for countries
-
-
 @st.cache_data
-def fetch_world_bank_data(indicators, countries):
+def load_world_bank_data(indicators, countries):
     # load data into session state for further processing
     st.session_state.df_wb_indicators_countries = wb.get_dataframe(
         indicators, country=countries, convert_date=False)
 
 # fetch indicators for selected source
-
-
 @st.cache_data
-def fetch_indicators_of_source(source):
+def load_indicators_of_source(source):
     return wb.get_indicator(source=source)
 
 
@@ -140,10 +134,14 @@ class EconomicDataAnalysis:
                     sizes_first_year.append(first_year[country_name])
                     labels.append(country_name)
                 else:
-                    st.write('Negative value for country ', country_name,
-                             ' could not be displayed in piechart')
+                    
+                    error_message = 'Negative value for country ' + country_name + \
+                                    ' could not be displayed in piechart'
+                    
+                    st.error(error_message, icon="🤖")
             except:
-                st.write('No data for first or last year for ', country_name)
+                error_message = 'No data for first or last year for ' + country_name
+                st.error(error_message, icon="🔥")                
                 continue
 
     def plot_pie_chart_for_year(self, last_year, labels, sizes_year):
@@ -174,8 +172,8 @@ class EconomicDataAnalysis:
                 first_year = indicator_per_country.iloc(0)[-1]
                 last_year = indicator_per_country.iloc(0)[0]
             except:
-                st.write('Error iloc at handling with dataframe: ',
-                         indicator_per_country)
+                error_message = 'Error iloc at handling with dataframe: ' + indicator_per_country
+                st.error(error_message, icon="🔥")
                 return pd.Series, pd.Series()
 
             if len(self.selected_country_names) == 1:
@@ -186,8 +184,9 @@ class EconomicDataAnalysis:
                         indicator_for_one_country = indicator_per_country[[
                             selected_country_name]]
                     except:
-                        st.write('No data for indicator',
-                                 self.selected_indicator['name'], ' and country ', selected_country_name, ' fetched')
+                        error_message = 'No data for indicator' + self.selected_indicator['name'] + \
+                                        ' and country ' + selected_country_name, ' loaded'
+                        st.error(error_message, icon="🔥")
                         return None, None
                     first_year = indicator_for_one_country.iloc[-1]
                     last_year = indicator_for_one_country.iloc[0]
@@ -237,21 +236,22 @@ class EconomicDataAnalysis:
             return
 
         fetch_to_execute = self.selected_country_names and self.selected_indicator_names and \
-            (not all(item in st.session_state.fetched_indicators for item in self.selected_indicator_names) or
-             not all(item in st.session_state.fetched_countries for item in self.selected_country_names))
+            (not all(item in st.session_state.loaded_indicators for item in self.selected_indicator_names) or
+             not all(item in st.session_state.loaded_countries for item in self.selected_country_names))
 
         # only process if selected data differs from displayed data
         if fetch_to_execute:
             # grab indicators above for countries above and load into data frame
             try:
-                fetch_world_bank_data(self.get_parameter_for_api_call())
+                indicators, countries = self.get_parameter_for_api_call()
+                load_world_bank_data(indicators, countries)
             except Exception as err:
                 # reset session state
                 self.initialize_session_state()
-                st.write('Error fetching data at worldbank for:')
                 for country_name in self.selected_country_names:
-                    st.write(country_name)
-                print(err)
+                    country_string = country_string + ' ' + country_name
+                error_message = 'Error during dataload from worldbank for:' + country_string
+                st.error(error_message, icon="🔥")
                 return
 
         if len(self.selected_indicator_names) == 1:
@@ -274,21 +274,21 @@ class EconomicDataAnalysis:
 
         # build dictionary of selected indicators
         # for api call and append to session state
-        st.session_state.fetched_indicators = []
+        st.session_state.loaded_indicators = []
         for indicator in self.selected_indicators:
             indicators[indicator['id']] = indicator['name']
-            st.session_state.fetched_indicators.append(indicator['name'])
+            st.session_state.loaded_indicators.append(indicator['name'])
 
         # build list of selected countries
         # for api call and append to session state
-        st.session_state.fetched_countries = []
+        st.session_state.loaded_countries = []
         for country in self.selected_countries:
             countries.append(country['id'])
-            st.session_state.fetched_countries.append(country['name'])
+            st.session_state.loaded_countries.append(country['name'])
         return indicators, countries
 
     def create_mulitiselect_indicator_country(self):
-        self.indicators = fetch_indicators_of_source(
+        self.indicators = load_indicators_of_source(
             [element for element in self.sources if element['name'] == self.selected_source_name][0]['id'])
         # build list of indicator names
         indicator_names = []
@@ -369,11 +369,11 @@ class EconomicDataAnalysis:
                  'https://github.com/gitwalter/economic_data_analysis.git')
 
     def initialize_session_state(self):
-        if 'fetched_countries' not in st.session_state:
-            st.session_state['fetched_countries'] = []
+        if 'loaded_countries' not in st.session_state:
+            st.session_state['loaded_countries'] = []
 
-        if 'fetched_indicators' not in st.session_state:
-            st.session_state['fetched_indicators'] = []
+        if 'loaded_indicators' not in st.session_state:
+            st.session_state['loaded_indicators'] = []
 
         if 'df_wb_indicators_countries' not in st.session_state:
             st.session_state['df_wb_indicators_countries'] = pd.DataFrame()
