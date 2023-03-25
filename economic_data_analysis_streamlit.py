@@ -59,7 +59,7 @@ class EconomicDataAnalysis:
         self.show_dataframe = False
 
     def output(self):
-        # title
+        # header for indicator
         st.header(self.selected_indicator['name'])
         st.subheader(self.selected_indicator['id'])
 
@@ -220,7 +220,8 @@ class EconomicDataAnalysis:
         if self.selected_source_name:
             self.create_mulitiselect_indicator_country()
 
-        st.title(self.selected_source_name)
+        title = 'Source: ' + self.selected_source_name
+        st.title(title)
 
         if st.session_state.df_wb_indicators_countries.empty:
             self.display_app_information()
