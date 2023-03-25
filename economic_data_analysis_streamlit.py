@@ -170,27 +170,23 @@ class EconomicDataAnalysis:
             if len(self.selected_country_names) == 1:
                 selected_country_name = self.selected_country_names[0]
 
-                indicator_for_one_country = indicator_per_country[[
-                    self.selected_country_names[0]]]
+                indicator_for_one_country = indicator_per_country[[selected_country_name]]
                 
-                first_year_value = indicator_for_one_country[-1]
-                
-                first_year_dict = {
-                    self.selected_country_names[0]: first_year_value}
-                
-                first_year_date = indicator_for_one_country.index[-1][1]
+                if type(indicator_for_one_country) is pd.DataFrame:
+                    first_year = indicator_for_one_country.iloc[-1]    
+                    last_year = indicator_for_one_country.iloc[0]    
+                else:
+                    first_year_value = indicator_for_one_country[-1]
+                    first_year_date = indicator_for_one_country.index[-1][1]
+                    first_year_dict = {selected_country_name: first_year_value}
+                    first_year = pd.Series(data=first_year_dict, index=[selected_country_name], name=first_year_date)
 
-                first_year = pd.Series(data=first_year_dict, index=[selected_country_name], name=first_year_date)
+                    last_year_value = indicator_for_one_country[0]
+                    last_year_date = indicator_for_one_country.index[0][1]
+                    last_year_dict = {selected_country_name: last_year_value}
+                    last_year = pd.Series(data=last_year_dict, index=[selected_country_name], name=last_year_date)
 
-                last_year_value = indicator_per_country[[
-                    self.selected_country_names[0]]][0]
-                
-                last_year_dict = {
-                    self.selected_country_names[0]: last_year_value}
-                
-                last_year_date = indicator_for_one_country.index[0][1]
 
-                last_year = pd.Series(data=last_year_dict, index=[selected_country_name], name=last_year_date)
             return first_year, last_year
 
     def run(self):
@@ -257,9 +253,9 @@ class EconomicDataAnalysis:
             except Exception as err:
                 # reset session state
                 self.initialize_session_state()
-                st.header('Error fetching data at worldbank for:')
-                st.write(countries)
-                st.write(err)
+                st.write('Error fetching data at worldbank for:')
+                st.write(self.selected_country_names)
+                # st.write(err)
                 return
 
         # build dataframe df_indicator_per_country
