@@ -353,6 +353,7 @@ class EconomicDataAnalysis:
                          indicator_name, 'and country ', country_name, ' loaded')
 
     def display_app_information(self):
+        st.header('How to use')
         st.write('1. Select source')
         st.write('2. Select indicators')
         st.write('3. Select countries')
