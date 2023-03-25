@@ -11,17 +11,15 @@ import matplotlib.pyplot as plt
 # method is cached and processed
 # only at start of the application
 @st.cache_data
-def start():
-    sources = wb.get_source()
-    countries = wb.get_country()
-    application = EconomicDataAnalysis(sources, countries)
+def start():    
+    application = EconomicDataAnalysis(wb.get_source(), wb.get_country())
     return application
 
 @st.cache_data
 def fetch_world_bank_data(indicators, countries):
     # grab indicators above for countries above and load into data frame in session state
     # reset session state
-    st.session_state.df_wb_indicators_countries = pd.DataFrame()
+    # st.session_state.df_wb_indicators_countries = pd.DataFrame()
     st.session_state.df_wb_indicators_countries = wb.get_dataframe(
         indicators, country=countries, convert_date=False)
 
@@ -85,7 +83,7 @@ class EconomicDataAnalysis:
         df_indicator_per_country = self.df_indicator_per_country.dropna(axis=0)
         if df_indicator_per_country.empty:
             st.write('Not enough datapoints for charts of first or last year of time series for indicator ', self.selected_indicator['name'], '.')
-            st.write('Try line chart or display of data.')
+            st.write('Try the line chart or display the dataframe for the indicator and exclude the countries with missing data and try angain.')            
             return
         else:
             try:             
@@ -237,11 +235,8 @@ class EconomicDataAnalysis:
         st.session_state.displayed_country_names = self.selected_country_names
 
     def create_mulitiselect_indicator_country(self):
-        source = [element for element in self.sources if element['name'] == self.selected_source_name][0]['id']
-        self.indicators = fetch_indicators_of_source(source)
-        # self.indicators = wb.get_indicator([element for element in self.sources if element['name'] == self.selected_source_name][0]['id'])
-
-            # build list of indicator names
+        self.indicators = fetch_indicators_of_source([element for element in self.sources if element['name'] == self.selected_source_name][0]['id'])
+        # build list of indicator names
         self.indicator_names = []
         for indicator in self.indicators:
             self.indicator_names.append(indicator['name'])
@@ -256,7 +251,7 @@ class EconomicDataAnalysis:
         self.line_chart = st.sidebar.checkbox(label='Line Chart')
         self.bar_chart = st.sidebar.checkbox(label='Bar Chart')
         self.pie_chart = st.sidebar.checkbox(label='Pie Chart')
-        self.show_dataframe = st.sidebar.checkbox(label='Display Data')
+        self.show_dataframe = st.sidebar.checkbox(label='Dataframe')
 
     def plot_indicator(self):
         for country_name in self.selected_country_names:
