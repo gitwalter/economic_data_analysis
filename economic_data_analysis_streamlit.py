@@ -67,7 +67,7 @@ class EconomicDataAnalysis:
     def output(self):
         if not (self.show_line_chart or self.show_bar_chart or self.show_pie_chart or self.show_dataframe):
             return
-        
+
         # title
         st.header(self.selected_indicator['name'])
         st.subheader(self.selected_indicator['id'])
@@ -172,18 +172,20 @@ class EconomicDataAnalysis:
 
             if len(self.selected_country_names) == 1:
                 selected_country_name = self.selected_country_names[0]
-                try:
-                    indicator_for_one_country = indicator_per_country[[
-                        selected_country_name]]
-                except:
-                    st.write('No data for indicator',
-                             self.selected_indicator['name'], ' and country ', selected_country_name, ' fetched')
-                    return None, None
 
-                if type(indicator_for_one_country) is pd.DataFrame:
+                if type(indicator_per_country) is pd.DataFrame:
+                    try:
+                        indicator_for_one_country = indicator_per_country[[
+                            selected_country_name]]
+                    except:
+                        st.write('No data for indicator',
+                                 self.selected_indicator['name'], ' and country ', selected_country_name, ' fetched')
+                        return None, None
                     first_year = indicator_for_one_country.iloc[-1]
                     last_year = indicator_for_one_country.iloc[0]
+
                 else:
+                    indicator_for_one_country = indicator_per_country
                     first_year_value = indicator_for_one_country[-1]
                     first_year_date = indicator_for_one_country.index[-1][1]
                     first_year_dict = {selected_country_name: first_year_value}
@@ -272,15 +274,9 @@ class EconomicDataAnalysis:
         # for selected indicators and countries and plot it
         # only 1 indicator selected?
         if len(self.selected_indicator_names) == 1:
-            self.selected_indicator = [
-                element for element in self.indicators if element['name'] in self.selected_indicator_names][0]
-
-            # ad column for each selected country
-            # in dataframe df_indicator_per_country
             self.plot_indicator()
 
         else:
-            df_indicator = pd.DataFrame()
             # plot each indicator for all selected countries
             self.plot_indicators()
 
@@ -309,6 +305,8 @@ class EconomicDataAnalysis:
         self.show_dataframe = st.sidebar.checkbox(label='Dataframe')
 
     def plot_indicator(self):
+        self.selected_indicator = [
+            element for element in self.indicators if element['name'] in self.selected_indicator_names][0]
         for country_name in self.selected_country_names:
             try:
                 self.df_indicator_per_country[country_name] = st.session_state.df_wb_indicators_countries.loc[country_name]
@@ -320,43 +318,43 @@ class EconomicDataAnalysis:
     def plot_indicators(self):
         for indicator_name in self.selected_indicator_names:
             try:
-                df_indicator = st.session_state.df_wb_indicators_countries[indicator_name]
+                indicator = st.session_state.df_wb_indicators_countries[indicator_name]
             except:
                 st.write('No data for indicator ', indicator_name)
                 continue
 
-            self.get_indicator_for_countries(df_indicator, indicator_name)
+            self.get_indicator_for_countries(indicator, indicator_name)
 
             self.output()
 
-    def get_indicator_for_countries(self, df_indicator, indicator_name):
+    def get_indicator_for_countries(self, indicator, indicator_name):
         self.selected_indicator = [
             element for element in self.indicators if element['name'] == indicator_name][0]
         if len(self.selected_country_names) == 1:
             try:
-                self.df_indicator_per_country = df_indicator.loc[self.selected_country_names[0]]
+                self.df_indicator_per_country = indicator.loc[self.selected_country_names[0]]
             except:
-                st.write('No data for ', self.selected_country_names[0], ' fetched' )
-                return            
+                st.write('No data for ',
+                         self.selected_country_names[0], ' fetched')
+                return
         else:
-            self.append_indicator_for_countries(df_indicator, indicator_name)
+            self.append_indicator_for_countries(indicator, indicator_name)
 
     def append_indicator_for_countries(self, df_indicator, indicator_name):
         for country_name in self.selected_country_names:
             try:
                 self.df_indicator_per_country[country_name] = df_indicator.loc[country_name]
             except:
-                st.write('No data for ',
-                         indicator_name, country_name)
+                st.write('No data for indicator',
+                         indicator_name, 'and country ', country_name, ' loaded')
 
     def display_app_information(self):
         st.write('1. Select source')
         st.write('2. Select indicators')
         st.write('3. Select countries')
-        st.write('4. Select output')        
-        st.write('5. Analyze data')    
+        st.write('4. Select output')
+        st.write('5. Analyze data')
         st.write('Data load starts after selection of output. To avoid data load after each parameter change deactivate output during selection of indicators or countries.')
-        
 
         st.write('Source: ', 'https://data.worldbank.org/')
         st.write('Interface: ', 'https://pypi.org/project/wbdata/')
