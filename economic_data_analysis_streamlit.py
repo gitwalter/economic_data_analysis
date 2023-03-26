@@ -1,12 +1,9 @@
 # https://wbdata.readthedocs.io/en/stable/
 
 import streamlit as st
-import streamlit.components.v1 as components
 import pandas as pd
 import wbdata as wb
 import matplotlib.pyplot as plt
-from st_aggrid import AgGrid, GridUpdateMode
-from st_aggrid.grid_options_builder import GridOptionsBuilder
 # get datasources and countries from https://data.worldbank.org/
 # and build instance of application method is cached and processed
 # only at start of the application
