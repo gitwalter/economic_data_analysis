@@ -465,8 +465,8 @@ class EconomicDataAnalysis:
             try:
                 self.indicator_per_country[country_name] = df_indicator.loc[country_name]
             except:
-                warning_message = 'No data for indicator' + indicator_name + \
-                    'and country ' + country_name
+                warning_message = 'No data for indicator ' + indicator_name + \
+                    ' and country ' + country_name
                 st.warning(warning_message, icon="⚠️")
 
     def display_app_information(self):
