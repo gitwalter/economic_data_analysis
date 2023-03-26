@@ -109,7 +109,7 @@ class EconomicDataAnalysis:
                 indicators, countries = self.get_parameter_for_api_call()
                 load_world_bank_data(indicators, countries)
                 self.set_title()
-            except Exception as err:
+            except:
                 # reset session state
                 self.initialize_session_state()
                 self.reset_session_state()
@@ -118,7 +118,7 @@ class EconomicDataAnalysis:
                     string_of_countries = string_of_countries + ' ' + country_name
                 error_message = 'Error during dataload from worldbank for:' + string_of_countries
                 st.error(error_message, icon="🔥")
-                st.write(err)
+                
                 return
 
         if len(self.selected_indicator_names) == 1:
@@ -161,7 +161,7 @@ class EconomicDataAnalysis:
         else:
             self.selected_country_names.extend(countries_of_incomeLevels)
 
-        self.selected_country_names = set(self.selected_country_names)
+        self.selected_country_names = list(set(self.selected_country_names))
 
     def output(self):
         # header for indicator
@@ -214,11 +214,8 @@ class EconomicDataAnalysis:
 
     def plot_indicator(self):
         # set selected indicator from selected indicator name
-
         self.selected_indicator = self.indicators[self.indicators['name']
                                                   == self.selected_indicator_names[0]]
-        # self.selected_indicator = [
-        #     element for element in self.indicators if element['name'] in self.selected_indicator_names][0]
 
         # iterate over countries and read indicator
         # for country from session state
@@ -262,7 +259,8 @@ class EconomicDataAnalysis:
 
     def build_country_dataframe(self, countries):
         self.countries = pd.DataFrame(countries)
-        # unpack dictionaries in columns
+        
+        # unpack dictionaries in columns region and incomeLevel
         regions_in_countries = self.countries['region'].apply(pd.Series)
         regions_in_countries = regions_in_countries.rename(
             columns={"id": "RegionID", "iso2code": "Regioniso2code", "value": "region"})
@@ -311,7 +309,7 @@ class EconomicDataAnalysis:
                     warning_message = 'Negative value for country ' + country_name + \
                         ' could not be displayed in piechart'
 
-                    st.warning(warning_message, icon="🤖")
+                    st.warning(warning_message, icon="⚠️")
             except:
                 warning_message = 'No data for first or last year for ' + country_name
                 st.warning(warning_message, icon="⚠️")
@@ -331,29 +329,35 @@ class EconomicDataAnalysis:
     def get_begin_end(self):
         # if 1 country is selected indicator_per_country is a pandas.Series
         # if many countries are selected indicator per country is a pandas.DataFrame
-        # indicator_per_country = self.indicator_per_country.dropna(axis=0)
+
+        # try to get rid of rows containing missing values        
         indicator_per_country = self.indicator_per_country.dropna(axis=0)
+
+        # hase every row has missing values
         if indicator_per_country.empty:
+            # try to get rid of columns containing missing values
             indicator_per_country = self.indicator_per_country.dropna(axis=1)
 
-        if indicator_per_country.empty:
+        if indicator_per_country.empty:            
             error_message = 'Not enough data for charts of first or last year of time series for indicator ' + \
                             self.selected_indicator.iloc[0]['name'] + '.' + \
                             ' Try the line chart or display the dataframe for the indicator and exclude countries with bad data quality and try again.'
-
             st.error(error_message, icon="🔥")
-
-            return pd.Series(), pd.Series()
+            return pd.Series(dtype=float), pd.Series(dtype=float)
+        
         else:
+            # read first and last year
             try:
                 first_year = indicator_per_country.iloc(0)[-1]
                 last_year = indicator_per_country.iloc(0)[0]
             except:
                 error_message = 'Error iloc at handling with dataframe: ' + indicator_per_country
                 st.error(error_message, icon="🔥")
-                return pd.Series(), pd.Series()
+                return pd.Series(dtype=float), pd.Series(dtype=float)
 
+            # get first and last year for single country
             if len(self.selected_country_names) == 1:
+
                 selected_country_name = self.selected_country_names[0]
                 if type(indicator_per_country) is pd.DataFrame:
                     first_year, last_year = self.get_begin_end_from_dataframe(
@@ -434,7 +438,7 @@ class EconomicDataAnalysis:
             'Indicator', indicator_names)
 
         self.selected_country_names = st.sidebar.multiselect(
-            'Country', self.country_names)
+            'Countries and Aggregates', self.country_names)
 
         self.selected_regions = st.sidebar.multiselect(
             'Region', self.regions)
