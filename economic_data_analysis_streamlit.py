@@ -1,5 +1,3 @@
-# https://wbdata.readthedocs.io/en/stable/
-
 import streamlit as st
 import pandas as pd
 import wbdata as wb
