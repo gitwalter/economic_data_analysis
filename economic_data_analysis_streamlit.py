@@ -317,12 +317,14 @@ class EconomicDataAnalysis:
         st.pyplot(piechart)
 
     def get_begin_end(self):
-        # if 1 country is selected indicator_per_country is a pandas.Series
-        # if many countries are selected indicator per country is a pandas.DataFrame
+        # safety first
         if self.indicator_per_country.empty:
             return
-
+        
+        # get row with first valid index as last year
         last_year = self.indicator_per_country.loc[self.indicator_per_country.apply(pd.Series.first_valid_index)[0]]
+        
+        # get row with last valid index as first year
         first_year = self.indicator_per_country.loc[self.indicator_per_country.apply(pd.Series.last_valid_index)[0]]
         return first_year, last_year
         
