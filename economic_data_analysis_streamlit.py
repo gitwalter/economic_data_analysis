@@ -111,12 +111,8 @@ class EconomicDataAnalysis:
                 self.set_title()
             except:
                 # reset session state
-                self.initialize_session_state()
-                self.reset_session_state()
-                string_of_countries = ''
-                for country_name in self.selected_country_names:
-                    string_of_countries = string_of_countries + ' ' + country_name
-                error_message = 'Error during dataload from worldbank for:' + string_of_countries
+                self.reset_session_state()               
+                error_message = 'Error during dataload from worldbank for: ' + ' '.join(self.selected_country_names)
                 st.error(error_message, icon="🔥")
                 
                 return
@@ -338,7 +334,6 @@ class EconomicDataAnalysis:
             self.selected_indicator_names)][['id', 'name']]
 
         # build dictionary of selected indicators
-        indicators = {}
         indicators = pd.Series(
             df_selected_indicators.name.values, index=df_selected_indicators.id).to_dict()
 
