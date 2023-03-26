@@ -111,10 +111,11 @@ class EconomicDataAnalysis:
                 self.set_title()
             except:
                 # reset session state
-                self.reset_session_state()               
-                error_message = 'Error during dataload from worldbank for: ' + ' '.join(self.selected_country_names)
+                self.reset_session_state()
+                error_message = 'Error during dataload from worldbank for: ' + \
+                    ' '.join(self.selected_country_names)
                 st.error(error_message, icon="🔥")
-                
+
                 return
 
         if len(self.selected_indicator_names) == 1:
@@ -178,7 +179,6 @@ class EconomicDataAnalysis:
         if self.show_bar_chart or self.show_pie_chart:
             first_year, last_year = self.get_begin_end()
 
-           
             if self.show_bar_chart:
                 try:
                     self.plot_bar_charts(last_year, first_year)
@@ -189,7 +189,8 @@ class EconomicDataAnalysis:
             # pie chart with first and last time series
             if self.show_pie_chart:
                 if len(self.selected_country_names) <= 1:
-                    st.info('Only one country selected, pie chart not supported', icon="ℹ️")
+                    st.info(
+                        'Only one country selected, pie chart not supported', icon="ℹ️")
 
                 if len(self.selected_country_names) > 1 and not self.indicator_per_country.empty:
                     self.plot_pie_charts(last_year, first_year)
@@ -245,7 +246,7 @@ class EconomicDataAnalysis:
 
     def build_country_dataframe(self, countries):
         self.countries = pd.DataFrame(countries)
-        
+
         # unpack dictionaries in columns region and incomeLevel
         regions_in_countries = self.countries['region'].apply(pd.Series)
         regions_in_countries = regions_in_countries.rename(
@@ -316,14 +317,16 @@ class EconomicDataAnalysis:
         # safety first
         if self.indicator_per_country.empty:
             return
-        
+
         # get row with first valid index as last year
-        last_year = self.indicator_per_country.loc[self.indicator_per_country.apply(pd.Series.first_valid_index)[0]]
-        
+        last_year = self.indicator_per_country.loc[self.indicator_per_country.apply(
+            pd.Series.first_valid_index)[0]]
+
         # get row with last valid index as first year
-        first_year = self.indicator_per_country.loc[self.indicator_per_country.apply(pd.Series.last_valid_index)[0]]
+        first_year = self.indicator_per_country.loc[self.indicator_per_country.apply(
+            pd.Series.last_valid_index)[0]]
         return first_year, last_year
-        
+
     def set_title(self):
         title = 'Source: ' + self.selected_source_name
         st.title(title)
@@ -347,7 +350,6 @@ class EconomicDataAnalysis:
         countries = self.countries[(self.countries['name']).isin(
             self.selected_country_names)]['id'].to_list()
 
-        # st.session_state.loaded_countries = []
         st.session_state.loaded_countries = self.countries[(
             self.countries['name']).isin(self.selected_country_names)]['name'].to_list()
 
@@ -380,8 +382,6 @@ class EconomicDataAnalysis:
         self.show_dataframe = st.sidebar.checkbox(label='Dataframe')
 
     def get_indicator_for_countries(self, indicator, indicator_name):
-        # self.selected_indicator = [
-        #     element for element in self.indicators if element['name'] == indicator_name][0]
         self.selected_indicator = self.indicators[self.indicators['name']
                                                   == indicator_name]
         if len(self.selected_country_names) == 1:
