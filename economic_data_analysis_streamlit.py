@@ -438,7 +438,7 @@ class EconomicDataAnalysis:
             'Indicator', indicator_names)
 
         self.selected_country_names = st.sidebar.multiselect(
-            'Countries and Aggregates', self.country_names)
+            'Country', self.country_names)
 
         self.selected_regions = st.sidebar.multiselect(
             'Region', self.regions)
@@ -482,7 +482,7 @@ class EconomicDataAnalysis:
         st.header('How to use')
         st.write('1. Select source')
         st.write('2. Select indicators')
-        st.write('3. Select countries')
+        st.write('3. Select countries by name, region or income level')
         st.write('4. Select output')
         st.write('5. Analyze data')
         st.write('Data load starts after selection of output types. To avoid data load after each parameter change deactivate checkboxes for output during selection of indicators,countries, regions or income levels.')
