@@ -224,12 +224,11 @@ class EconomicDataAnalysis:
 
         if self.selected_source_name:
             self.create_mulitiselect_indicator_country()
-
-        title = 'Source: ' + self.selected_source_name
-        st.title(title)
-
+        
         if st.session_state.df_wb_indicators_countries.empty:
             self.display_app_information()
+        else:
+            self.set_title()
 
         self.create_checkboxes()
 
@@ -258,7 +257,8 @@ class EconomicDataAnalysis:
             # grab indicators above for countries above and load into data frame
             try:
                 indicators, countries = self.get_parameter_for_api_call()
-                load_world_bank_data(indicators, countries)
+                load_world_bank_data(indicators, countries)                
+                self.set_title()
             except Exception as err:
                 # reset session state
                 self.initialize_session_state()
@@ -276,6 +276,10 @@ class EconomicDataAnalysis:
         else:
             # plot each indicator for all selected countries
             self.plot_indicators()
+
+    def set_title(self):
+        title = 'Source: ' + self.selected_source_name
+        st.title(title)
 
     def get_parameter_for_api_call(self):
         self.selected_indicators = [
