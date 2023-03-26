@@ -84,11 +84,11 @@ class EconomicDataAnalysis:
             self.set_title()
 
         self.create_checkboxes()
-        
+
         self.get_selected_country_names()
 
         # not enough defined to fetch data?
-        no_output_requested = not ( self.selected_country_names or self.selected_regions  or self.selected_income_levels) or \
+        no_output_requested = not (self.selected_country_names or self.selected_regions or self.selected_income_levels) or \
             not self.selected_indicator_names or \
             not (self.show_line_chart or self.show_pie_chart or self.show_bar_chart or self.show_dataframe)
 
@@ -134,7 +134,7 @@ class EconomicDataAnalysis:
             st.header('Indicator List')
             df_indicator_display = pd.DataFrame(self.indicators)
             df_indicator_display = df_indicator_display[[
-                    'id', 'name', 'sourceNote']]
+                'id', 'name', 'sourceNote']]
             st.dataframe(df_indicator_display)
 
         if st.checkbox('Show Country List'):
@@ -143,24 +143,25 @@ class EconomicDataAnalysis:
 
     def get_selected_country_names(self):
         # countries are selected by names, regions or income levels
-        if not ( self.selected_country_names or self.selected_regions or self.selected_income_levels ):            
+        if not (self.selected_country_names or self.selected_regions or self.selected_income_levels):
             return
-        
+
         # append countries of selected regions
-        countries_of_regions = self.countries[self.countries['region'].isin(self.selected_regions)]['name'].tolist()
+        countries_of_regions = self.countries[self.countries['region'].isin(
+            self.selected_regions)]['name'].tolist()
         if not self.selected_country_names:
             self.selected_country_names = countries_of_regions
-        else:    
-             self.selected_country_names.extend(countries_of_regions)
+        else:
+            self.selected_country_names.extend(countries_of_regions)
 
-
-        countries_of_incomeLevels = self.countries[self.countries['incomeLevel'].isin(self.selected_income_levels)]['name'].tolist()
+        countries_of_incomeLevels = self.countries[self.countries['incomeLevel'].isin(
+            self.selected_income_levels)]['name'].tolist()
         if not self.selected_country_names:
             self.selected_country_names = countries_of_incomeLevels
-        else:    
-             self.selected_country_names.extend(countries_of_incomeLevels)
+        else:
+            self.selected_country_names.extend(countries_of_incomeLevels)
 
-        self.selected_country_names = set(self.selected_country_names)             
+        self.selected_country_names = set(self.selected_country_names)
 
     def output(self):
         # header for indicator
@@ -212,9 +213,10 @@ class EconomicDataAnalysis:
             st.dataframe(self.indicator_per_country)
 
     def plot_indicator(self):
-        # set selected indicator from selected indicator name  
-    
-        self.selected_indicator =  self.indicators[self.indicators['name'] == self.selected_indicator_names[0]]
+        # set selected indicator from selected indicator name
+
+        self.selected_indicator = self.indicators[self.indicators['name']
+                                                  == self.selected_indicator_names[0]]
         # self.selected_indicator = [
         #     element for element in self.indicators if element['name'] in self.selected_indicator_names][0]
 
@@ -307,9 +309,9 @@ class EconomicDataAnalysis:
                 else:
 
                     warning_message = 'Negative value for country ' + country_name + \
-                                    ' could not be displayed in piechart'
+                        ' could not be displayed in piechart'
 
-                    st.error(warning_message, icon="🤖")
+                    st.warning(warning_message, icon="🤖")
             except:
                 warning_message = 'No data for first or last year for ' + country_name
                 st.warning(warning_message, icon="⚠️")
@@ -406,7 +408,8 @@ class EconomicDataAnalysis:
             df_selected_indicators.name.values, index=df_selected_indicators.id).to_dict()
 
         # write session state
-        st.session_state.loaded_indicators = df_selected_indicators['name'].to_list()
+        st.session_state.loaded_indicators = df_selected_indicators['name'].to_list(
+        )
 
         # build list of selected countries
         # for api call and append to session state
@@ -449,12 +452,14 @@ class EconomicDataAnalysis:
     def get_indicator_for_countries(self, indicator, indicator_name):
         # self.selected_indicator = [
         #     element for element in self.indicators if element['name'] == indicator_name][0]
-        self.selected_indicator = self.indicators[self.indicators['name']==indicator_name]
+        self.selected_indicator = self.indicators[self.indicators['name']
+                                                  == indicator_name]
         if len(self.selected_country_names) == 1:
             try:
                 self.indicator_per_country = indicator.loc[self.selected_country_names[0]]
             except:
-                warning_message = 'No data for ' + self.selected_country_names[0]
+                warning_message = 'No data for ' + \
+                    self.selected_country_names[0]
                 st.warning(warning_message, icon="⚠️")
                 return
         else:
