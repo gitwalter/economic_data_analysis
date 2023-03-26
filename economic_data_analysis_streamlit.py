@@ -1,10 +1,12 @@
 # https://wbdata.readthedocs.io/en/stable/
 
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 import wbdata as wb
 import matplotlib.pyplot as plt
-
+from st_aggrid import AgGrid, GridUpdateMode
+from st_aggrid.grid_options_builder import GridOptionsBuilder
 # get datasources and countries from https://data.worldbank.org/
 # and build instance of application method is cached and processed
 # only at start of the application
@@ -239,21 +241,23 @@ class EconomicDataAnalysis:
             not self.selected_indicator_names or \
             not (self.show_line_chart or self.show_pie_chart or self.show_bar_chart or self.show_dataframe)
 
-        if nothing_to_process:
+        if nothing_to_process:            
+            st.header('Indicator list')            
             df_indicator_display = pd.DataFrame(self.indicators)
             df_indicator_display = df_indicator_display[['id', 'name', 'sourceNote']]
-            st.header('Indicator list')
             st.dataframe(df_indicator_display)
+                        
             st.header('Country list')
-            st.dataframe(self.countries)
+            df_country_display = pd.DataFrame(self.countries)
+            st.dataframe(df_country_display)                        
             return
 
-        fetch_to_execute = self.selected_country_names and self.selected_indicator_names and \
+        load_to_execute = self.selected_country_names and self.selected_indicator_names and \
             (not all(item in st.session_state.loaded_indicators for item in self.selected_indicator_names) or
              not all(item in st.session_state.loaded_countries for item in self.selected_country_names))
 
         # only process if selected data differs from displayed data
-        if fetch_to_execute:
+        if load_to_execute:
             # grab indicators above for countries above and load into data frame
             try:
                 indicators, countries = self.get_parameter_for_api_call()
@@ -261,6 +265,7 @@ class EconomicDataAnalysis:
             except Exception as err:
                 # reset session state
                 self.initialize_session_state()
+                self.reset_session_state()
                 country_string = ''
                 for country_name in self.selected_country_names:
                     country_string = country_string + ' ' + country_name
@@ -395,6 +400,9 @@ class EconomicDataAnalysis:
         if 'df_wb_indicators_countries' not in st.session_state:
             st.session_state['df_wb_indicators_countries'] = pd.DataFrame()
 
-
+    def reset_session_state(self):
+        st.session_state.loaded_indicators = []
+        st.session_state.loaded_countries = []
+        st.session_state.df_wb_indicators_countries = pd.DataFrame()
 application = start()
 application.run()
