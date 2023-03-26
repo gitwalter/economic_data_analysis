@@ -7,25 +7,19 @@ import matplotlib.pyplot as plt
 # get datasources and countries from https://data.worldbank.org/
 # and build instance of application method is cached and processed
 # only at start of the application
-
-
 @st.cache_data
 def start():
     application = EconomicDataAnalysis(wb.get_source(), wb.get_country())
     return application
 
-# fetch selected indicator values for countries
-
-
+# load selected indicator values for countries
 @st.cache_data
 def load_world_bank_data(indicators, countries):
     # load data into session state for further processing
     st.session_state.df_wb_indicators_countries = wb.get_dataframe(
         indicators, country=countries, convert_date=False)
 
-# fetch indicators for selected source
-
-
+# load indicators for selected source
 @st.cache_data
 def load_indicators_of_source(source):
     return wb.get_indicator(source=source)
