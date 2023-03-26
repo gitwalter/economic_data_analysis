@@ -182,18 +182,8 @@ class EconomicDataAnalysis:
         if self.show_bar_chart or self.show_pie_chart:
             first_year, last_year = self.get_begin_end()
 
-            show_bar_chart = self.show_bar_chart
-            show_pie_chart = self.show_pie_chart
-
-            # data not set?
-            if not 'first_year' in locals():
-                show_bar_chart = False
-                show_pie_chart = False
-            elif first_year.empty:
-                show_bar_chart = False
-                show_pie_chart = False
-
-            if show_bar_chart:
+           
+            if self.show_bar_chart:
                 try:
                     self.plot_bar_charts(last_year, first_year)
                 except Exception as err:
@@ -201,9 +191,9 @@ class EconomicDataAnalysis:
                     st.write(err)
 
             # pie chart with first and last time series
-            if show_pie_chart:
+            if self.show_pie_chart:
                 if len(self.selected_country_names) <= 1:
-                    st.write('Only one country selected, pie chart not supported')
+                    st.info('Only one country selected, pie chart not supported', icon="ℹ️")
 
                 if len(self.selected_country_names) > 1 and not self.indicator_per_country.empty:
                     self.plot_pie_charts(last_year, first_year)
@@ -329,74 +319,13 @@ class EconomicDataAnalysis:
     def get_begin_end(self):
         # if 1 country is selected indicator_per_country is a pandas.Series
         # if many countries are selected indicator per country is a pandas.DataFrame
+        if self.indicator_per_country.empty:
+            return
 
-        # try to get rid of rows containing missing values        
-        indicator_per_country = self.indicator_per_country.dropna(axis=0)
-
-        # hase every row has missing values
-        if indicator_per_country.empty:
-            # try to get rid of columns containing missing values
-            indicator_per_country = self.indicator_per_country.dropna(axis=1)
-
-        if indicator_per_country.empty:            
-            error_message = 'Not enough data for charts of first or last year of time series for indicator ' + \
-                            self.selected_indicator.iloc[0]['name'] + '.' + \
-                            ' Try the line chart or display the dataframe for the indicator and exclude countries with bad data quality and try again.'
-            st.error(error_message, icon="🔥")
-            return pd.Series(dtype=float), pd.Series(dtype=float)
-        
-        else:
-            # read first and last year
-            try:
-                first_year = indicator_per_country.iloc(0)[-1]
-                last_year = indicator_per_country.iloc(0)[0]
-            except:
-                error_message = 'Error iloc at handling with dataframe: ' + indicator_per_country
-                st.error(error_message, icon="🔥")
-                return pd.Series(dtype=float), pd.Series(dtype=float)
-
-            # get first and last year for single country
-            if len(self.selected_country_names) == 1:
-
-                selected_country_name = self.selected_country_names[0]
-                if type(indicator_per_country) is pd.DataFrame:
-                    first_year, last_year = self.get_begin_end_from_dataframe(
-                        indicator_per_country, selected_country_name)
-
-                else:
-                    first_year, last_year = self.get_begin_end_from_series(
-                        indicator_per_country, selected_country_name)
-
-            return first_year, last_year
-
-    def get_begin_end_from_dataframe(self, indicator_per_country, selected_country_name):
-        try:
-            indicator_for_one_country = indicator_per_country[[
-                selected_country_name]]
-        except:
-            warning_message = 'No data for indicator' + self.selected_indicator.iloc[0]['name'] + \
-                ' and country ' + selected_country_name
-            st.warning(warning_message, icon="⚠️")
-            return pd.Series(), pd.Series()
-
-        return indicator_for_one_country.iloc[-1], indicator_for_one_country.iloc[0]
-
-    def get_begin_end_from_series(self, indicator_per_country, selected_country_name):
-        indicator_for_one_country = indicator_per_country
-        first_year_value = indicator_for_one_country[-1]
-        first_year_date = indicator_for_one_country.index[-1][1]
-        first_year_dict = {selected_country_name: first_year_value}
-        first_year = pd.Series(data=first_year_dict, index=[
-            selected_country_name], name=first_year_date)
-
-        last_year_value = indicator_for_one_country[0]
-        last_year_date = indicator_for_one_country.index[0][1]
-        last_year_dict = {selected_country_name: last_year_value}
-        last_year = pd.Series(data=last_year_dict, index=[
-            selected_country_name], name=last_year_date)
-
+        last_year = self.indicator_per_country.loc[self.indicator_per_country.apply(pd.Series.first_valid_index)[0]]
+        first_year = self.indicator_per_country.loc[self.indicator_per_country.apply(pd.Series.last_valid_index)[0]]
         return first_year, last_year
-
+        
     def set_title(self):
         title = 'Source: ' + self.selected_source_name
         st.title(title)
