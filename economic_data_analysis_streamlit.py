@@ -96,7 +96,7 @@ class EconomicDataAnalysis:
         # if no output is requested
         if no_output_requested:
             self.display_indicators_countries()
-            return            
+            return
 
         new_data_requested = self.selected_country_names and self.selected_indicator_names and \
             (not all(item in st.session_state.loaded_indicators for item in self.selected_indicator_names) or
@@ -180,13 +180,13 @@ class EconomicDataAnalysis:
 
             if self.show_warnings:
                 self.check_country_data_begin_end(first_year, last_year)
-           
+
             if self.show_bar_chart:
                 try:
                     self.plot_bar_charts(last_year, first_year)
-                except Exception as err:
-                    st.write('Bar charts could not be generated')
-                    st.write(err)
+                except:
+                    error_message = 'Bar charts could not be generated'
+                    st.error(error_message, icon="🔥")
 
             # pie chart with first and last time series
             if self.show_pie_chart:
@@ -211,10 +211,9 @@ class EconomicDataAnalysis:
         for country_name in self.selected_country_names:
             try:
                 self.indicator_per_country[country_name] = st.session_state.df_wb_indicators_countries.loc[country_name]
-            except:                
+            except:
                 warning_message = 'No data for ' + country_name
                 self.warning(warning_message)
-
 
         self.output()
 
@@ -224,7 +223,7 @@ class EconomicDataAnalysis:
         for indicator_name in self.selected_indicator_names:
             try:
                 indicator = st.session_state.df_wb_indicators_countries[indicator_name]
-            except:               
+            except:
                 warning_message = 'No data for indicator ' + indicator_name
                 self.warning(warning_message)
                 continue
@@ -297,7 +296,7 @@ class EconomicDataAnalysis:
                     sizes_last_year.append(last_year[country_name])
                     sizes_first_year.append(first_year[country_name])
                     labels.append(country_name)
-                else:                    
+                else:
                     warning_message = 'Negative value for country ' + country_name + \
                         ' could not be displayed in piechart'
 
@@ -322,13 +321,14 @@ class EconomicDataAnalysis:
         if self.indicator_per_country.empty:
             return
 
-
         # get rid of rows with nan values
-        indicator_per_country_filled = self.indicator_per_country.dropna(axis=0)
+        indicator_per_country_filled = self.indicator_per_country.dropna(
+            axis=0)
 
         if indicator_per_country_filled.empty:
             # lets try again and drop columns with nan values
-            indicator_per_country_filled = self.indicator_per_country.dropna(axis=1)
+            indicator_per_country_filled = self.indicator_per_country.dropna(
+                axis=1)
 
         # if still empty we know that each row
         # and each column has nan values and take therefore the data of the first
@@ -337,15 +337,15 @@ class EconomicDataAnalysis:
             indicator_per_country_filled = self.indicator_per_country
 
         try:
-        # get row with first valid index as last year      
+            # get row with first valid index as last year
             last_year = indicator_per_country_filled.loc[indicator_per_country_filled.apply(
-                            pd.Series.first_valid_index)[0]]
+                pd.Series.first_valid_index)[0]]
 
         # get row with last valid index as first year
             first_year = indicator_per_country_filled.loc[indicator_per_country_filled.apply(
-                            pd.Series.last_valid_index)[0]]
+                pd.Series.last_valid_index)[0]]
         except:
-            warning_message = 'No first year or last year detected.' 
+            warning_message = 'No first year or last year detected.'
             self.warning(warning_message)
             return pd.Series(dtype=float), pd.Series(dtype=float)
 
@@ -404,7 +404,8 @@ class EconomicDataAnalysis:
         self.show_bar_chart = st.sidebar.checkbox(label='Bar Chart')
         self.show_pie_chart = st.sidebar.checkbox(label='Pie Chart')
         self.show_dataframe = st.sidebar.checkbox(label='Dataframe')
-        self.show_warnings = st.sidebar.checkbox(label='Show warnings', value=True)
+        self.show_warnings = st.sidebar.checkbox(
+            label='Show warnings', value=True)
 
     def get_indicator_for_countries(self, indicator, indicator_name):
         self.selected_indicator = self.indicators[self.indicators['name']
@@ -412,8 +413,9 @@ class EconomicDataAnalysis:
         if len(self.selected_country_names) == 1:
             try:
                 self.indicator_per_country = indicator.loc[self.selected_country_names[0]]
-            except:                
-                warning_message = 'No data for ' + self.selected_country_names[0]
+            except:
+                warning_message = 'No data for ' + \
+                    self.selected_country_names[0]
                 self.warning(warning_message)
                 return
         else:
@@ -423,20 +425,19 @@ class EconomicDataAnalysis:
         for country_name in self.selected_country_names:
             try:
                 self.indicator_per_country[country_name] = df_indicator.loc[country_name]
-            except:                
+            except:
                 warning_message = 'No data for indicator ' + indicator_name + \
                     ' and country ' + country_name
                 self.warning(warning_message)
-    
-    def check_country_data_begin_end(self, first_year, last_year):        
+
+    def check_country_data_begin_end(self, first_year, last_year):
         for country_name in self.selected_country_names:
             if not country_name in first_year.index:
-                warning_message = 'No data for first year for ' + country_name                
+                warning_message = 'No data for first year for ' + country_name
                 self.warning(warning_message)
             if not country_name in last_year.index:
                 warning_message = 'No data for last year for ' + country_name
                 self.warning(warning_message)
-
 
     def warning(self, warning):
         if self.show_warnings:
