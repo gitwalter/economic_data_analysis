@@ -427,7 +427,7 @@ class EconomicDataAnalysis:
         st.write('3. Select countries by name, region or income level')
         st.write('4. Select output')
         st.write('5. Analyze data')
-        st.write('Data load starts after selection of output types. To avoid data load after each parameter change deactivate checkboxes for output during selection of indicators,countries, regions or income levels.')
+        st.write('Data load starts after selection of output types. To avoid data load after each parameter change deactivate checkboxes for output during selection of indicators, countries, regions or income levels.')
 
         st.write('Source: ', 'https://data.worldbank.org/')
         st.write('Interface: ', 'https://pypi.org/project/wbdata/')
