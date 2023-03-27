@@ -83,7 +83,7 @@ class EconomicDataAnalysis:
         else:
             self.set_title()
 
-        self.create_checkboxes()
+        self.create_sidebar_checkboxes()
 
         self.get_selected_country_names()
 
@@ -96,7 +96,7 @@ class EconomicDataAnalysis:
         # if no output is requested
         if no_output_requested:
             self.display_indicators_countries()
-            return
+            return            
 
         new_data_requested = self.selected_country_names and self.selected_indicator_names and \
             (not all(item in st.session_state.loaded_indicators for item in self.selected_indicator_names) or
@@ -179,6 +179,9 @@ class EconomicDataAnalysis:
         if self.show_bar_chart or self.show_pie_chart:
             first_year, last_year = self.get_begin_end()
 
+            if self.show_warnings:
+                self.check_country_data_begin_end(first_year, last_year)
+           
             if self.show_bar_chart:
                 try:
                     self.plot_bar_charts(last_year, first_year)
@@ -209,9 +212,9 @@ class EconomicDataAnalysis:
         for country_name in self.selected_country_names:
             try:
                 self.indicator_per_country[country_name] = st.session_state.df_wb_indicators_countries.loc[country_name]
-            except:
+            except:                
                 warning_message = 'No data for ' + country_name
-                st.warning(warning_message, icon="⚠️")
+                self.warning(warning_message)
 
 
         self.output()
@@ -222,9 +225,9 @@ class EconomicDataAnalysis:
         for indicator_name in self.selected_indicator_names:
             try:
                 indicator = st.session_state.df_wb_indicators_countries[indicator_name]
-            except:
+            except:               
                 warning_message = 'No data for indicator ' + indicator_name
-                st.error(warning_message, icon="⚠️")
+                self.warning(warning_message)
                 continue
 
             self.get_indicator_for_countries(indicator, indicator_name)
@@ -236,6 +239,7 @@ class EconomicDataAnalysis:
         self.show_bar_chart = False
         self.show_pie_chart = False
         self.show_dataframe = False
+        self.show_warnings = True
 
     def initialize_selection_parameter(self):
         self.selected_source_name = None
@@ -292,15 +296,13 @@ class EconomicDataAnalysis:
                     sizes_last_year.append(last_year[country_name])
                     sizes_first_year.append(first_year[country_name])
                     labels.append(country_name)
-                else:
-
+                else:                    
                     warning_message = 'Negative value for country ' + country_name + \
                         ' could not be displayed in piechart'
 
-                    st.warning(warning_message, icon="⚠️")
+                    self.warning(warning_message)
             except:
-                warning_message = 'No data for first or last year for ' + country_name
-                st.warning(warning_message, icon="⚠️")
+                # no data for country for last or first year
                 continue
 
     def plot_pie_chart_for_year(self, last_year, labels, sizes_year):
@@ -390,12 +392,13 @@ class EconomicDataAnalysis:
         self.selected_income_levels = st.sidebar.multiselect(
             'Income Level', self.income_levels)
 
-    def create_checkboxes(self):
+    def create_sidebar_checkboxes(self):
         st.sidebar.header('Output')
         self.show_line_chart = st.sidebar.checkbox(label='Line Chart')
         self.show_bar_chart = st.sidebar.checkbox(label='Bar Chart')
         self.show_pie_chart = st.sidebar.checkbox(label='Pie Chart')
         self.show_dataframe = st.sidebar.checkbox(label='Dataframe')
+        self.show_warnings = st.sidebar.checkbox(label='Show warnings', value=True)
 
     def get_indicator_for_countries(self, indicator, indicator_name):
         self.selected_indicator = self.indicators[self.indicators['name']
@@ -403,10 +406,9 @@ class EconomicDataAnalysis:
         if len(self.selected_country_names) == 1:
             try:
                 self.indicator_per_country = indicator.loc[self.selected_country_names[0]]
-            except:
-                warning_message = 'No data for ' + \
-                    self.selected_country_names[0]
-                st.warning(warning_message, icon="⚠️")
+            except:                
+                warning_message = 'No data for ' + self.selected_country_names[0]
+                self.warning(warning_message)
                 return
         else:
             self.append_indicator_for_countries(indicator, indicator_name)
@@ -415,10 +417,24 @@ class EconomicDataAnalysis:
         for country_name in self.selected_country_names:
             try:
                 self.indicator_per_country[country_name] = df_indicator.loc[country_name]
-            except:
+            except:                
                 warning_message = 'No data for indicator ' + indicator_name + \
                     ' and country ' + country_name
-                st.warning(warning_message, icon="⚠️")
+                self.warning(warning_message)
+    
+    def check_country_data_begin_end(self, first_year, last_year):        
+        for country_name in self.selected_country_names:
+            if not country_name in first_year.index:
+                warning_message = 'No data for first year for ' + country_name                
+                self.warning(warning_message)
+            if not country_name in last_year.index:
+                warning_message = 'No data for last year for ' + country_name
+                self.warning(warning_message)
+
+
+    def warning(self, warning):
+        if self.show_warnings:
+            st.warning(warning, icon="⚠️")
 
     def display_app_information(self):
         st.header('How to use')
@@ -427,7 +443,7 @@ class EconomicDataAnalysis:
         st.write('3. Select countries by name, region or income level')
         st.write('4. Select output')
         st.write('5. Analyze data')
-        st.write('Data load starts after selection of output types. To avoid data load after each parameter change deactivate checkboxes for output during selection of indicators, countries, regions or income levels.')
+        st.write('Data load starts after selection of output types. To avoid data load after each parameter change deactivate checkboxes for output during selection of indicators,countries, regions or income levels.')
 
         st.write('Source: ', 'https://data.worldbank.org/')
         st.write('Interface: ', 'https://pypi.org/project/wbdata/')
