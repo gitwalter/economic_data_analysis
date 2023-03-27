@@ -213,6 +213,7 @@ class EconomicDataAnalysis:
                 warning_message = 'No data for ' + country_name
                 st.warning(warning_message, icon="⚠️")
 
+
         self.output()
 
     def plot_indicators(self):
@@ -318,13 +319,28 @@ class EconomicDataAnalysis:
         if self.indicator_per_country.empty:
             return
 
-        # get row with first valid index as last year
-        last_year = self.indicator_per_country.loc[self.indicator_per_country.apply(
+
+        # get rid of rows with nan values
+        indicator_per_country_filled = self.indicator_per_country.dropna(axis=0)
+
+        if indicator_per_country_filled.empty:
+            # lets try again and drop columns with nan values
+            indicator_per_country_filled = self.indicator_per_country.dropna(axis=1)
+
+        # if still empty we know that each row
+        # and each column has nan values and take therefore the data of the first
+        # and last valid index accepting that not all selected countries are represented
+        if indicator_per_country_filled.empty:
+            indicator_per_country_filled = self.indicator_per_country
+
+        # get row with first valid index as last year      
+        last_year = indicator_per_country_filled.loc[indicator_per_country_filled.apply(
             pd.Series.first_valid_index)[0]]
 
         # get row with last valid index as first year
-        first_year = self.indicator_per_country.loc[self.indicator_per_country.apply(
+        first_year = indicator_per_country_filled.loc[indicator_per_country_filled.apply(
             pd.Series.last_valid_index)[0]]
+
         return first_year, last_year
 
     def set_title(self):
