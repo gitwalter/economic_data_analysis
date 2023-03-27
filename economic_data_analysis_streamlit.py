@@ -269,8 +269,10 @@ class EconomicDataAnalysis:
         return pd.concat([self.countries.drop(['incomeLevel'], axis=1), income_levels_in_countries["incomeLevel"]], axis=1)
 
     def plot_bar_charts(self, bar_chart_data_last_year, bar_chart_data_first_year):
-        st.bar_chart(data=bar_chart_data_last_year)
-        st.bar_chart(data=bar_chart_data_first_year)
+        if not bar_chart_data_last_year.empty:
+            st.bar_chart(data=bar_chart_data_last_year)
+        if not bar_chart_data_first_year.empty:
+            st.bar_chart(data=bar_chart_data_first_year)
 
     def plot_pie_charts(self, last_year, first_year):
         labels = []
@@ -334,13 +336,16 @@ class EconomicDataAnalysis:
         if indicator_per_country_filled.empty:
             indicator_per_country_filled = self.indicator_per_country
 
+        try:
         # get row with first valid index as last year      
-        last_year = indicator_per_country_filled.loc[indicator_per_country_filled.apply(
-            pd.Series.first_valid_index)[0]]
+            last_year = indicator_per_country_filled.loc[indicator_per_country_filled.apply(
+                            pd.Series.first_valid_index)[0]]
 
         # get row with last valid index as first year
-        first_year = indicator_per_country_filled.loc[indicator_per_country_filled.apply(
-            pd.Series.last_valid_index)[0]]
+            first_year = indicator_per_country_filled.loc[indicator_per_country_filled.apply(
+                            pd.Series.last_valid_index)[0]]
+        except:
+            return pd.Series(dtype=float), pd.Series(dtype=float)
 
         return first_year, last_year
 
