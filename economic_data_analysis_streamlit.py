@@ -345,7 +345,7 @@ class EconomicDataAnalysis:
             first_year = indicator_per_country_filled.loc[indicator_per_country_filled.apply(
                             pd.Series.last_valid_index)[0]]
         except:
-            warning_message = 'No first year or last year detected: ' 
+            warning_message = 'No first year or last year detected.' 
             self.warning(warning_message)
             return pd.Series(dtype=float), pd.Series(dtype=float)
 
